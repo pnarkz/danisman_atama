@@ -8,3 +8,9 @@ start_error.txt
 dev_error.txt
 vite-error.txt
 *.log
+__pycache__/
+backend/db/*.e2e.db
+backend/db/*.e2e.db-shm
+backend/db/*.e2e.db-wal
+frontend/playwright-report/
+frontend/test-results/

@@ -1,14 +1,25 @@
 import json
 import os
+import shutil
+import signal
+import socket
 import sqlite3
+import subprocess
+import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from pathlib import Path
 
 import requests
 
 
-BASE_URL = os.environ.get("DANISMAN_API_BASE", "http://127.0.0.1:3000/api")
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "backend", "db", "danisman_atama.db")
+ROOT_DIR = Path(__file__).resolve().parent.parent
+BACKEND_DIR = ROOT_DIR / "backend"
+SOURCE_DB = BACKEND_DIR / "db" / "danisman_atama.db"
+
+BASE_URL = None
+DB_PATH = None
+results = []
 
 
 @dataclass
@@ -18,11 +29,97 @@ class ScenarioResult:
     details: str
 
 
-results = []
-
-
 def record(name, ok, details):
     results.append(ScenarioResult(name=name, status="PASS" if ok else "FAIL", details=details))
+
+
+def find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
+def wait_for_port(port, timeout=30):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(1)
+            if sock.connect_ex(("127.0.0.1", port)) == 0:
+                return
+        time.sleep(0.5)
+    raise TimeoutError(f"Backend {port} portunda zamaninda ayaga kalkmadi.")
+
+
+def prepare_temp_db(temp_dir):
+    if not SOURCE_DB.exists():
+        raise FileNotFoundError(f"Kaynak veritabani bulunamadi: {SOURCE_DB}")
+
+    target = Path(temp_dir) / "danisman_atama.runtime.db"
+    shutil.copy2(SOURCE_DB, target)
+
+    for suffix in ("-shm", "-wal"):
+        source_sidecar = SOURCE_DB.with_name(SOURCE_DB.name + suffix)
+        if source_sidecar.exists():
+            shutil.copy2(source_sidecar, Path(f"{target}{suffix}"))
+
+    return target
+
+
+def start_backend(temp_db):
+    port = find_free_port()
+    env = os.environ.copy()
+    env["PORT"] = str(port)
+    env["DB_PATH"] = str(temp_db)
+    creationflags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
+    node_binary = shutil.which("node") or shutil.which("node.exe")
+
+    if not node_binary:
+        raise FileNotFoundError("Node.js yurutulebilir dosyasi bulunamadi.")
+
+    command = [node_binary, "server.js"]
+
+    process = subprocess.Popen(
+        command,
+        cwd=BACKEND_DIR,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        creationflags=creationflags,
+    )
+
+    try:
+        wait_for_port(port)
+    except Exception:
+        stop_backend(process)
+        output = ""
+        if process.stdout:
+            output = process.stdout.read()
+        raise RuntimeError(f"Backend baslatilamadi.\n{output}") from None
+
+    return process, f"http://127.0.0.1:{port}/api"
+
+
+def stop_backend(process):
+    if process.poll() is not None:
+        return
+
+    if os.name == "nt" and hasattr(signal, "CTRL_BREAK_EVENT"):
+        try:
+            process.send_signal(signal.CTRL_BREAK_EVENT)
+            process.wait(timeout=5)
+            return
+        except (ProcessLookupError, subprocess.TimeoutExpired):
+            pass
+
+    process.terminate()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=5)
+
+    time.sleep(1)
 
 
 def db_connect():
@@ -33,29 +130,37 @@ def db_connect():
 
 
 def db_one(query, params=()):
-    with db_connect() as connection:
+    connection = db_connect()
+    try:
         row = connection.execute(query, params).fetchone()
         return dict(row) if row else None
+    finally:
+        connection.close()
 
 
 def db_all(query, params=()):
-    with db_connect() as connection:
+    connection = db_connect()
+    try:
         rows = connection.execute(query, params).fetchall()
         return [dict(row) for row in rows]
+    finally:
+        connection.close()
 
 
 def db_run(query, params=()):
-    with db_connect() as connection:
+    connection = db_connect()
+    try:
         connection.execute(query, params)
         connection.commit()
+    finally:
+        connection.close()
 
 
 def api(method, path, token=None, **kwargs):
     headers = kwargs.pop("headers", {})
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    response = requests.request(method, f"{BASE_URL}{path}", headers=headers, timeout=30, **kwargs)
-    return response
+    return requests.request(method, f"{BASE_URL}{path}", headers=headers, timeout=30, **kwargs)
 
 
 def expect_status(response, expected, context):
@@ -129,7 +234,7 @@ def reset_for_assignment_test(active_faculty_ids, keep_student_ids):
     db_run("UPDATE faculty SET current_quota = 0, base_quota = 0 WHERE is_active = 1")
 
 
-def main():
+def run_scenarios():
     admin_token, _ = login("admin@ankara.edu.tr", "admin123")
     faculty_token, faculty_user = login("ahmet.yilmaz@ankara.edu.tr", "hoca123")
     student_token, student_user = login("ogrenci01@ankara.edu.tr", "ogrenci123")
@@ -147,12 +252,7 @@ def main():
     temp_student = get_student_by_email(temp_email)
     faculty_one = get_faculty_by_email("ahmet.yilmaz@ankara.edu.tr")
     before_quota = db_one("SELECT current_quota FROM faculty WHERE id = ?", (faculty_one["id"],))["current_quota"]
-    response = api(
-        "POST",
-        "/admin/force-assign",
-        token=admin_token,
-        json={"student_id": temp_student["id"], "faculty_id": faculty_one["id"]},
-    )
+    response = api("POST", "/admin/force-assign", token=admin_token, json={"student_id": temp_student["id"], "faculty_id": faculty_one["id"]})
     expect_status(response, 200, "force assign temp student")
     delete_response = api("DELETE", f"/admin/users/{temp_user['id']}", token=admin_token)
     expect_status(delete_response, 200, "delete temp student")
@@ -237,11 +337,7 @@ def main():
     db_run("UPDATE faculty SET base_quota = 1, current_quota = 1 WHERE id = ?", (active_faculty_ids[1],))
     db_run("UPDATE faculty SET base_quota = 1, current_quota = 0 WHERE id = ?", (active_faculty_ids[2],))
     fallback_token, _ = login(fallback_email, "Temp1234!")
-    expect_status(
-        api("POST", "/students/preferences", token=fallback_token, json={"preferences": [active_faculty_ids[0], active_faculty_ids[1]]}),
-        200,
-        "save fallback prefs",
-    )
+    expect_status(api("POST", "/students/preferences", token=fallback_token, json={"preferences": [active_faculty_ids[0], active_faculty_ids[1]]}), 200, "save fallback prefs")
     expect_status(api("POST", "/admin/run-assignment", token=admin_token), 200, "run assignment for fallback")
     fallback_assignment = db_one("SELECT assigned_faculty_id FROM students WHERE id = ?", (fallback_student["id"],))
     record(
@@ -255,16 +351,8 @@ def main():
     reassignment_email = f"reassign_{int(time.time())}@ankara.edu.tr"
     register_student(reassignment_email, "Yeniden Atama Ogrencisi", gano=3.25)
     reassignment_student = get_student_by_email(reassignment_email)
-    expect_status(
-        api("POST", "/admin/force-assign", token=admin_token, json={"student_id": reassignment_student["id"], "faculty_id": faculty_four["id"]}),
-        200,
-        "assign student to faculty four",
-    )
-    expect_status(
-        api("PATCH", f"/admin/faculty/{faculty_four['id']}/status", token=admin_token, json={"is_active": False}),
-        200,
-        "deactivate faculty four",
-    )
+    expect_status(api("POST", "/admin/force-assign", token=admin_token, json={"student_id": reassignment_student["id"], "faculty_id": faculty_four["id"]}), 200, "assign student to faculty four")
+    expect_status(api("PATCH", f"/admin/faculty/{faculty_four['id']}/status", token=admin_token, json={"is_active": False}), 200, "deactivate faculty four")
     faculty_four_token, _ = login("fatma.ozturk@ankara.edu.tr", "hoca123")
     blocked_search = api("GET", "/faculty/students?minGano=3.0", token=faculty_four_token)
     student_faculty_list = api("GET", "/students/faculty-list", token=student_token)
@@ -273,16 +361,9 @@ def main():
     response = api("POST", "/admin/calculate-quotas", token=admin_token)
     expect_status(response, 200, "calculate quotas after deactivation")
     quota_ids = {item["faculty_id"] for item in response.json()["quotas"]}
-    expect_status(
-        api("POST", "/admin/force-assign", token=admin_token, json={"student_id": reassignment_student["id"], "faculty_id": faculty_five["id"]}),
-        200,
-        "reassign student to faculty five",
-    )
+    expect_status(api("POST", "/admin/force-assign", token=admin_token, json={"student_id": reassignment_student["id"], "faculty_id": faculty_five["id"]}), 200, "reassign student to faculty five")
     reassigned = db_one("SELECT assigned_faculty_id FROM students WHERE id = ?", (reassignment_student["id"],))
-    latest_force_log = db_one(
-        "SELECT action FROM assignment_logs WHERE student_id = ? ORDER BY id DESC LIMIT 1",
-        (reassignment_student["id"],),
-    )
+    latest_force_log = db_one("SELECT action FROM assignment_logs WHERE student_id = ? ORDER BY id DESC LIMIT 1", (reassignment_student["id"],))
     faculty_four_quota = db_one("SELECT current_quota FROM faculty WHERE id = ?", (faculty_four["id"],))["current_quota"]
     faculty_five_quota = db_one("SELECT current_quota FROM faculty WHERE id = ?", (faculty_five["id"],))["current_quota"]
     record(
@@ -304,12 +385,7 @@ def main():
     password_email = f"password_{int(time.time())}@ankara.edu.tr"
     register_student(password_email, "Sifre Test Ogrencisi", gano=2.90, password="OldPass123!")
     password_token, _ = login(password_email, "OldPass123!")
-    change_response = api(
-        "POST",
-        "/auth/change-password",
-        token=password_token,
-        json={"current_password": "OldPass123!", "new_password": "NewPass123!"},
-    )
+    change_response = api("POST", "/auth/change-password", token=password_token, json={"current_password": "OldPass123!", "new_password": "NewPass123!"})
     expect_status(change_response, 200, "change password")
     new_login = api("POST", "/auth/login", json={"email": password_email, "password": "NewPass123!"})
     old_login = api("POST", "/auth/login", json={"email": password_email, "password": "OldPass123!"})
@@ -352,7 +428,22 @@ def main():
         "birden fazla bolum kaydi hem veritabaninda hem de tercih havuzunda goruldu.",
     )
 
-    print(json.dumps([result.__dict__ for result in results], ensure_ascii=False, indent=2))
+
+def main():
+    global BASE_URL, DB_PATH
+
+    with tempfile.TemporaryDirectory(prefix="danisman-runtime-") as temp_dir:
+        temp_db = prepare_temp_db(temp_dir)
+        DB_PATH = str(temp_db)
+        backend_process, BASE_URL = start_backend(temp_db)
+
+        try:
+            run_scenarios()
+            print(json.dumps([asdict(result) for result in results], ensure_ascii=False, indent=2))
+            if any(result.status != "PASS" for result in results):
+                raise SystemExit(1)
+        finally:
+            stop_backend(backend_process)
 
 
 if __name__ == "__main__":
