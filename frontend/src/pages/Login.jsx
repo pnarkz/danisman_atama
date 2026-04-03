@@ -28,7 +28,7 @@ export default function Login({ onLogin }) {
       else if (response.data.user.role === 'hoca') navigate('/faculty');
       else navigate('/student');
     } catch (requestError) {
-      setError(requestError.response?.data?.error || 'Oturum acilamadi.');
+      setError(requestError.response?.data?.error || 'Oturum açılamadı.');
     } finally {
       setLoading(false);
     }
@@ -37,11 +37,11 @@ export default function Login({ onLogin }) {
   return (
     <div className="login-grid animate-fade-in">
       <section className="login-brand">
-        <p className="eyebrow">Kurumsal Erisim</p>
-        <h1>Danismanlik atama surecini tek merkezden yonetin.</h1>
+        <p className="eyebrow">Kurumsal Erişim</p>
+        <h1>Danışmanlık atama sürecini tek merkezden yönetin.</h1>
         <p className="muted-copy">
-          Ogrenci tercihleri, danisman teklifleri, kontenjan kararlarI ve merkezi yerlestirme
-          adimlari ayni operasyon akisi icinde izlenir.
+          Öğrenci tercihleri, danışman teklifleri, kontenjan kararları ve merkezi yerleştirme
+          adımları aynı operasyon akışı içinde izlenir.
         </p>
 
         <div className="feature-stack">
@@ -49,14 +49,14 @@ export default function Login({ onLogin }) {
             <ShieldCheck size={18} />
             <div>
               <strong>Yetkilendirme</strong>
-              <p className="muted-copy">Oturumlar rol bazli dogrulama ile korunur.</p>
+              <p className="muted-copy">Oturumlar rol bazlı doğrulama ile korunur.</p>
             </div>
           </article>
           <article className="feature-card">
             <ArrowRight size={18} />
             <div>
-              <strong>Merkezi Akis</strong>
-              <p className="muted-copy">Otomatik siralama asamasinda tek kriter GANO'dur.</p>
+              <strong>Merkezi Akış</strong>
+              <p className="muted-copy">Otomatik sıralama aşamasında tek kriter GANO'dur.</p>
             </div>
           </article>
         </div>
@@ -65,13 +65,13 @@ export default function Login({ onLogin }) {
       <section className="panel login-panel">
         <div className="section-header">
           <div>
-            <p className="eyebrow">Giris</p>
-            <h2>Sisteme erisin</h2>
+            <p className="eyebrow">Giriş</p>
+            <h2>Sisteme erişin</h2>
           </div>
         </div>
 
         <p className="muted-copy">
-          Kurumsal e-posta adresiniz ve sifreniz ile oturum acin.
+          Kurumsal e-posta adresiniz ve şifreniz ile oturum açın.
         </p>
 
         {error && <div className="notice notice-error">{error}</div>}
@@ -84,7 +84,7 @@ export default function Login({ onLogin }) {
               <input
                 type="email"
                 className="app-input"
-                placeholder="ornek@ankara.edu.tr"
+                placeholder="örnek@ankara.edu.tr"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -93,7 +93,7 @@ export default function Login({ onLogin }) {
           </label>
 
           <label className="field-block">
-            <span>Sifre</span>
+            <span>Şifre</span>
             <div className="field-with-icon">
               <Lock size={16} />
               <input
@@ -109,15 +109,15 @@ export default function Login({ onLogin }) {
 
           <button type="submit" className="btn btn-primary btn-wide" disabled={loading}>
             <ArrowRight size={16} />
-            {loading ? 'Oturum aciliyor' : 'Devam et'}
+            {loading ? 'Oturum açılıyor' : 'Devam et'}
           </button>
         </form>
 
         <div className="demo-box">
-          <p><strong>Demo hesaplari</strong></p>
+          <p><strong>Demo hesapları</strong></p>
           <p>Admin: admin@ankara.edu.tr / admin123</p>
-          <p>Danisman: ahmet.yilmaz@ankara.edu.tr / hoca123</p>
-          <p>Ogrenci: ogrenci01@ankara.edu.tr / ogrenci123</p>
+          <p>Danışman: ahmet.yilmaz@ankara.edu.tr / hoca123</p>
+          <p>Öğrenci: ogrenci01@ankara.edu.tr / ogrenci123</p>
         </div>
       </section>
     </div>

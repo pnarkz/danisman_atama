@@ -170,7 +170,7 @@ function runAssignment() {
                     stats.placedByPreference++;
                     
                     db.prepare('INSERT INTO assignment_logs (student_id, faculty_id, action, details) VALUES (?, ?, ?, ?)')
-                      .run(student.id, fid, 'GALE_SHAPLEY_ASSIGN', 'Tercihine gore atandi (GANO: ' + student.gano + ')');
+                      .run(student.id, fid, 'GALE_SHAPLEY_ASSIGN', 'Tercihine göre atandı (GANO: ' + student.gano + ')');
                     break;
                 }
             }
@@ -202,7 +202,7 @@ function runAssignment() {
                     stats.placedRandomly++;
                     
                     db.prepare('INSERT INTO assignment_logs (student_id, faculty_id, action, details) VALUES (?, ?, ?, ?)')
-                      .run(student.id, fid, 'FALLBACK_ASSIGN', 'Bos kontenjana rastgele atandi (GANO: ' + student.gano + ')');
+                      .run(student.id, fid, 'FALLBACK_ASSIGN', 'Boş kontenjana yerleştirildi (GANO: ' + student.gano + ')');
                 } else {
                     stats.unplaced++;
                 }

@@ -2,9 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { GraduationCap, KeyRound, LogOut, Shield, UsersRound } from 'lucide-react';
 
 const ROLE_LABELS = {
-  admin: 'Yonetici',
-  hoca: 'Danisman',
-  ogrenci: 'Ogrenci',
+  admin: 'Yönetici',
+  hoca: 'Danışman',
+  ogrenci: 'Öğrenci',
 };
 
 const ROLE_ICONS = {
@@ -22,8 +22,8 @@ export default function Navbar({ user, onLogout, onOpenPasswordDialog }) {
       <button className="brand-lockup" type="button" onClick={() => navigate('/')}>
         <div className="brand-mark">AU</div>
         <div className="brand-copy">
-          <span className="eyebrow">Ankara Universitesi</span>
-          <strong>Danisman Atama Sistemi</strong>
+          <span className="eyebrow">Ankara Üniversitesi</span>
+          <strong>Danışman Atama Sistemi</strong>
         </div>
       </button>
 
@@ -38,12 +38,12 @@ export default function Navbar({ user, onLogout, onOpenPasswordDialog }) {
 
         <button onClick={onOpenPasswordDialog} className="btn btn-outline" type="button">
           <KeyRound size={16} />
-          Sifre
+          Şifre
         </button>
 
         <button onClick={onLogout} className="btn btn-primary" type="button">
           <LogOut size={16} />
-          Cikis
+          Çıkış
         </button>
       </div>
     </nav>

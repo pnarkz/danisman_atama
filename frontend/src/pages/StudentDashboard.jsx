@@ -34,7 +34,7 @@ export default function StudentDashboard({ user }) {
       setFacultyList(facultyResponse.data);
       setPreferences(preferenceResponse.data);
     } catch {
-      setNotice({ type: 'error', text: 'Ogrenci verileri yuklenirken bir sorun olustu.' });
+      setNotice({ type: 'error', text: 'Öğrenci verileri yüklenirken bir sorun oluştu.' });
     }
   };
 
@@ -45,8 +45,8 @@ export default function StudentDashboard({ user }) {
   const handleInvitation = async (invitationId, status) => {
     const confirmed = window.confirm(
       status === 'accepted'
-        ? 'Bu danismanlik teklifini kabul etmek istiyor musunuz?'
-        : 'Bu danismanlik teklifini reddetmek istiyor musunuz?',
+        ? 'Bu danışmanlık teklifini kabul etmek istiyor musunuz?'
+        : 'Bu danışmanlık teklifini reddetmek istiyor musunuz?',
     );
 
     if (!confirmed) {
@@ -58,12 +58,12 @@ export default function StudentDashboard({ user }) {
       setNotice({
         type: 'success',
         text: status === 'accepted'
-          ? 'Danismanlik teklifi kabul edildi.'
-          : 'Danismanlik teklifi reddedildi.',
+          ? 'Danışmanlık teklifi kabul edildi.'
+          : 'Danışmanlık teklifi reddedildi.',
       });
       await loadData();
     } catch (error) {
-      setNotice({ type: 'error', text: error.response?.data?.error || 'Islem tamamlanamadi.' });
+      setNotice({ type: 'error', text: error.response?.data?.error || 'İşlem tamamlanamadı.' });
     }
   };
 
@@ -118,8 +118,8 @@ export default function StudentDashboard({ user }) {
   if (!profile) {
     return (
       <section className="panel panel-centered">
-        <p className="eyebrow">Ogrenci Paneli</p>
-        <h2>Bilgiler yukleniyor</h2>
+        <p className="eyebrow">Öğrenci Paneli</p>
+        <h2>Bilgiler yükleniyor</h2>
       </section>
     );
   }
@@ -128,11 +128,11 @@ export default function StudentDashboard({ user }) {
     <div className="stack-layout animate-fade-in">
       <section className="hero-banner">
         <div>
-          <p className="eyebrow">Ogrenci Modulu</p>
+          <p className="eyebrow">Öğrenci Modülü</p>
           <h1>{sessionUser?.full_name}</h1>
           <p className="muted-copy">
-            {profile.department_name} bolumunde kayitli ogrenci profili. Otomatik yerlestirme akisi
-            yalnizca GANO siralamasina gore calisir.
+            {profile.department_name} bölümünde kayıtlı öğrenci profili. Otomatik yerleştirme akışı
+            yalnızca GANO sıralamasına göre çalışır.
           </p>
         </div>
 
@@ -142,12 +142,12 @@ export default function StudentDashboard({ user }) {
             <strong>{profile.gano?.toFixed?.(2) || profile.gano}</strong>
           </article>
           <article className="stat-card">
-            <span>Giris yili</span>
+            <span>Giriş yılı</span>
             <strong>{profile.entry_year}</strong>
           </article>
           <article className="stat-card">
             <span>Durum</span>
-            <strong>{isAssigned ? 'Atandi' : 'Beklemede'}</strong>
+            <strong>{isAssigned ? 'Atandı' : 'Beklemede'}</strong>
           </article>
         </div>
       </section>
@@ -159,13 +159,13 @@ export default function StudentDashboard({ user }) {
           <section className="panel emphasis-panel">
             <div className="section-header">
               <div>
-                <p className="eyebrow">Kesinlesen Sonuc</p>
-                <h2>Danisman atamasi tamamlandi</h2>
+                <p className="eyebrow">Kesinleşen Sonuç</p>
+                <h2>Danışman ataması tamamlandı</h2>
               </div>
             </div>
 
             <div className="result-card">
-              <p>Atanan danisman</p>
+              <p>Atanan danışman</p>
               <strong>{profile.assigned_faculty_name}</strong>
               <span>{profile.department_name}</span>
             </div>
@@ -184,10 +184,10 @@ export default function StudentDashboard({ user }) {
                       <Mail size={18} />
                     </span>
                     <div>
-                      <p className="eyebrow">Manuel Danisman Teklifi</p>
+                      <p className="eyebrow">Manuel Danışman Teklifi</p>
                       <h3>{invitation.faculty_name}</h3>
                       <p className="muted-copy">
-                        Bu teklif kabul edildiginde yerlestirme sureciniz tamamlanir.
+                        Bu teklif kabul edildiğinde yerleştirme süreciniz tamamlanır.
                       </p>
                     </div>
                   </div>
@@ -218,8 +218,8 @@ export default function StudentDashboard({ user }) {
             <section className="panel">
               <div className="section-header">
                 <div>
-                  <p className="eyebrow">Danisman Havuzu</p>
-                  <h2>Aktif danismanlar</h2>
+                  <p className="eyebrow">Danışman Havuzu</p>
+                  <h2>Aktif danışmanlar</h2>
                 </div>
                 <span className="icon-chip">
                   <GraduationCap size={18} />
@@ -227,13 +227,13 @@ export default function StudentDashboard({ user }) {
               </div>
 
               <p className="muted-copy">
-                Tercih havuzundaki tum danismanlar aktif durumdadir. Yerlestirme sirasinda tercih
-                listesi, sistemin hangi danismanlari hangi sirayla deneyecegini belirler.
+                Tercih havuzundaki tüm danışmanlar aktif durumdadır. Yerleştirme sırasında tercih
+                listesi, sistemin hangi danışmanları hangi sırayla deneyeceğini belirler.
               </p>
 
               <div className="card-list">
                 {availableFaculty.length === 0 ? (
-                  <div className="empty-state">Eklenebilecek yeni danisman kalmadi.</div>
+                  <div className="empty-state">Eklenebilecek yeni danışman kalmadı.</div>
                 ) : (
                   availableFaculty.map((faculty) => (
                     <article key={faculty.id} className="list-card">
@@ -260,8 +260,8 @@ export default function StudentDashboard({ user }) {
             <section className="panel">
               <div className="section-header">
                 <div>
-                  <p className="eyebrow">Tercih Sirasi</p>
-                  <h2>Kayitli tercih listeniz</h2>
+                  <p className="eyebrow">Tercih Sırası</p>
+                  <h2>Kayıtlı tercih listeniz</h2>
                 </div>
                 <button
                   type="button"
@@ -276,7 +276,7 @@ export default function StudentDashboard({ user }) {
 
               <div className="card-list">
                 {preferences.length === 0 ? (
-                  <div className="empty-state">Henuz tercih listeniz olusturulmadi.</div>
+                  <div className="empty-state">Henüz tercih listeniz oluşturulmadı.</div>
                 ) : (
                   preferences.map((preference, index) => (
                     <article key={preference.id} className="preference-card">

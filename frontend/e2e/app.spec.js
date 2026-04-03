@@ -44,9 +44,9 @@ test('admin can log in and run quota calculation', async ({ page }) => {
   await login(page, 'admin@ankara.edu.tr', 'admin123');
 
   await expect(page).toHaveURL(/\/admin$/);
-  await expect(page.getByRole('heading', { name: 'Yerlestirme ve kullanici yonetimi' })).toBeVisible();
-  await page.getByRole('button', { name: 'Kontenjanlari hesapla' }).click();
-  await expect(page.getByText(/Kontenjanlar guncellendi/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Yerleştirme ve kullanıcı yönetimi' })).toBeVisible();
+  await page.getByRole('button', { name: 'Kontenjanları hesapla' }).click();
+  await expect(page.getByText(/Kontenjanlar güncellendi/i)).toBeVisible();
 });
 
 test('student can log in and persist preferences', async ({ page, request }) => {
@@ -58,7 +58,7 @@ test('student can log in and persist preferences', async ({ page, request }) => 
   await login(page, email, 'Temp1234!');
 
   await expect(page).toHaveURL(/\/student$/);
-  await expect(page.getByRole('heading', { name: 'Aktif danismanlar' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Aktif danışmanlar' })).toBeVisible();
 
   const firstFacultyName = (await page.locator('.list-card h3').first().textContent())?.trim();
   expect(firstFacultyName).toBeTruthy();
@@ -68,7 +68,7 @@ test('student can log in and persist preferences', async ({ page, request }) => 
   await expect(page.getByText(/Tercih listeniz kaydedildi/i)).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Kayitli tercih listeniz' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Kayıtlı tercih listeniz' })).toBeVisible();
   await expect(page.locator('.preference-card')).toHaveCount(1);
   await expect(page.getByText(firstFacultyName)).toBeVisible();
 });
@@ -85,13 +85,13 @@ test('faculty can log in and send a direct offer', async ({ page, request }) => 
   await login(page, facultyEmail, 'Temp1234!');
 
   await expect(page).toHaveURL(/\/faculty$/);
-  await expect(page.getByRole('heading', { name: 'Danismanliginiz altindaki ogrenciler' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Danışmanlığınız altındaki öğrenciler' })).toBeVisible();
 
   await page.locator('input[type="number"]').fill('3.98');
   await page.getByRole('button', { name: 'Filtrele' }).click();
 
   const targetCard = page.locator('.list-card', { hasText: studentName });
   await expect(targetCard).toBeVisible();
-  await targetCard.getByRole('button', { name: 'Teklif gonder' }).click();
-  await expect(page.getByText(new RegExp(`${studentName} icin dogrudan teklif gonderildi`, 'i'))).toBeVisible();
+  await targetCard.getByRole('button', { name: 'Teklif gönder' }).click();
+  await expect(page.getByText(new RegExp(`${studentName} için doğrudan teklif gönderildi`, 'i'))).toBeVisible();
 });

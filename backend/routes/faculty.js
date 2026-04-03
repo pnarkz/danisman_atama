@@ -16,7 +16,7 @@ router.get('/me', authenticate, authorize('hoca'), (req, res) => {
             WHERE f.user_id = ?
         `).get(req.user.id);
 
-        if (!faculty) return res.status(404).json({ error: 'Hoca profili bulunamadı.' });
+        if (!faculty) return res.status(404).json({ error: 'Danışman profili bulunamadı.' });
 
         res.json(faculty);
     } catch (err) {
@@ -89,7 +89,7 @@ router.post('/invite', authenticate, authorize('hoca'), (req, res) => {
         db.transaction(() => {
             db.prepare('INSERT INTO pre_assignments (student_id, faculty_id) VALUES (?, ?)').run(student_id, faculty.id);
             db.prepare('INSERT INTO assignment_logs (student_id, faculty_id, action, details) VALUES (?, ?, ?, ?)')
-              .run(student_id, faculty.id, 'INVITE_SENT', 'Hoca ön atama daveti gönderdi.');
+              .run(student_id, faculty.id, 'INVITE_SENT', 'Danışman ön atama daveti gönderdi.');
         })();
 
         res.json({ message: 'Davet gönderildi.' });

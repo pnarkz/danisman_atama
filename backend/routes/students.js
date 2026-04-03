@@ -90,7 +90,7 @@ router.post('/preferences', authenticate, authorize('ogrenci'), (req, res) => {
         if (!student) return res.status(404).json({ error: 'Öğrenci bulunamadı.' });
         if (student.is_assigned) return res.status(400).json({ error: 'Zaten bir danışmana atanmışsınız. Tercih değiştiremezsiniz.' });
         if (!preferences.every((facultyId) => activeFacultyIds.has(facultyId))) {
-            return res.status(400).json({ error: 'Tercih listenizde pasif veya geçersiz bir hoca bulunuyor.' });
+            return res.status(400).json({ error: 'Tercih listenizde pasif veya geçersiz bir danışman bulunuyor.' });
         }
 
         // Start transaction
@@ -186,7 +186,7 @@ router.post('/invitations/:id/respond', authenticate, authorize('ogrenci'), (req
         });
 
         transaction();
-        res.json({ message: `Davet ${status === 'accepted' ? 'kabul' : 'red'} edildi.` });
+        res.json({ message: status === 'accepted' ? 'Davet kabul edildi.' : 'Davet reddedildi.' });
 
     } catch (err) {
         console.error(err);

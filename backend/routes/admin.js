@@ -80,7 +80,7 @@ router.post('/force-assign', authenticate, authorize('admin'), (req, res) => {
             db.prepare('UPDATE faculty SET current_quota = current_quota + 1 WHERE id = ?').run(faculty_id);
             
             db.prepare('INSERT INTO assignment_logs (student_id, faculty_id, action, details) VALUES (?, ?, ?, ?)')
-              .run(student_id, faculty_id, 'FORCE_ASSIGN', 'Admin tarafindan manuel atama yapildi.');
+              .run(student_id, faculty_id, 'FORCE_ASSIGN', 'Admin tarafından manuel atama yapıldı.');
         })();
         
         res.json({ message: 'Zorunlu atama başarılı.' });
@@ -106,12 +106,12 @@ router.get('/export', authenticate, authorize('admin'), (req, res) => {
         `).all();
         
         // Simple CSV generation
-        const header = 'Ogrenci Adi,Ogrenci Email,GANO,Atanan Hoca\n';
+        const header = 'Öğrenci Adı,Öğrenci E-posta,GANO,Atanan Danışman\n';
         const rows = results.map(r => `"${r.student_name}","${r.student_email}",${r.gano},"${r.assigned_faculty_name || 'ATANMADI'}"`).join('\n');
         
-        res.header('Content-Type', 'text/csv');
+        res.header('Content-Type', 'text/csv; charset=utf-8');
         res.attachment('atama_sonuclari.csv');
-        res.send(header + rows);
+        res.send(`\uFEFF${header}${rows}`);
         
     } catch (err) {
         console.error(err);

@@ -104,9 +104,9 @@ function App() {
             element={(
               <section className="panel panel-centered">
                 <p className="eyebrow">404</p>
-                <h2>Sayfa bulunamadi</h2>
+                <h2>Sayfa bulunamadı</h2>
                 <p className="muted-copy">
-                  Baglanti guncel degil veya bu ekrana erisim izniniz bulunmuyor.
+                  Bağlantı güncel değil veya bu ekrana erişim izniniz bulunmuyor.
                 </p>
               </section>
             )}

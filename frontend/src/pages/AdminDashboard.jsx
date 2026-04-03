@@ -3,6 +3,12 @@ import { Calculator, Download, Play, RefreshCcw, ShieldCheck, Trash2, UserCog, U
 import api from '../api';
 import PasswordPanel from '../components/PasswordPanel';
 
+const ROLE_LABELS = {
+  admin: 'Yönetici',
+  hoca: 'Danışman',
+  ogrenci: 'Öğrenci',
+};
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -36,7 +42,7 @@ export default function AdminDashboard() {
       setFacultyList(facultyResponse.data);
       setResults(resultsResponse.data);
     } catch {
-      setNotice({ type: 'error', text: 'Yonetici verileri yuklenemedi.' });
+      setNotice({ type: 'error', text: 'Yönetici verileri yüklenemedi.' });
     }
   };
 
@@ -68,7 +74,7 @@ export default function AdminDashboard() {
       setNotice({ type: 'success', text: `${successText}. ${response.data.message || ''}`.trim() });
       await loadData();
     } catch (error) {
-      setNotice({ type: 'error', text: error.response?.data?.error || 'Islem tamamlanamadi.' });
+      setNotice({ type: 'error', text: error.response?.data?.error || 'İşlem tamamlanamadı.' });
     } finally {
       setLoading(false);
     }
@@ -85,7 +91,7 @@ export default function AdminDashboard() {
       link.click();
       document.body.removeChild(link);
     } catch {
-      setNotice({ type: 'error', text: 'CSV disa aktarma islemi basarisiz oldu.' });
+      setNotice({ type: 'error', text: 'CSV dışa aktarma işlemi başarısız oldu.' });
     }
   };
 
@@ -95,12 +101,12 @@ export default function AdminDashboard() {
       setNotice({ type: 'success', text: response.data.message });
       await loadData();
     } catch (error) {
-      setNotice({ type: 'error', text: error.response?.data?.error || 'Danisman durumu guncellenemedi.' });
+      setNotice({ type: 'error', text: error.response?.data?.error || 'Danışman durumu güncellenemedi.' });
     }
   };
 
   const handleDeleteUser = async (userId, fullName) => {
-    const confirmed = window.confirm(`${fullName} kaydini sistemden kaldirmak istiyor musunuz?`);
+    const confirmed = window.confirm(`${fullName} kaydını sistemden kaldırmak istiyor musunuz?`);
     if (!confirmed) {
       return;
     }
@@ -110,7 +116,7 @@ export default function AdminDashboard() {
       setNotice({ type: 'success', text: response.data.message });
       await loadData();
     } catch (error) {
-      setNotice({ type: 'error', text: error.response?.data?.error || 'Kullanici silinemedi.' });
+      setNotice({ type: 'error', text: error.response?.data?.error || 'Kullanıcı silinemedi.' });
     }
   };
 
@@ -118,7 +124,7 @@ export default function AdminDashboard() {
     event.preventDefault();
 
     if (!selectedStudentId || !selectedFacultyId) {
-      setNotice({ type: 'error', text: 'Manuel atama icin ogrenci ve danisman secin.' });
+      setNotice({ type: 'error', text: 'Manuel atama için öğrenci ve danışman seçin.' });
       return;
     }
 
@@ -130,7 +136,7 @@ export default function AdminDashboard() {
       setNotice({ type: 'success', text: response.data.message });
       await loadData();
     } catch (error) {
-      setNotice({ type: 'error', text: error.response?.data?.error || 'Manuel atama tamamlanamadi.' });
+      setNotice({ type: 'error', text: error.response?.data?.error || 'Manuel atama tamamlanamadı.' });
     }
   };
 
@@ -138,18 +144,18 @@ export default function AdminDashboard() {
     <div className="stack-layout animate-fade-in">
       <section className="hero-banner">
         <div>
-          <p className="eyebrow">Yonetici Modulu</p>
-          <h1>Yerlestirme ve kullanici yonetimi</h1>
+          <p className="eyebrow">Yönetici Modülü</p>
+          <h1>Yerleştirme ve kullanıcı yönetimi</h1>
           <p className="muted-copy">
-            Bu panel; kontenjan hesaplama, GANO merkezli merkezi yerlestirme, kullanici yasam dongusu
-            ve donem ici danisman degisikligi islemleri icin kullanilir.
+            Bu panel; kontenjan hesaplama, GANO merkezli merkezi yerleştirme, kullanıcı yaşam döngüsü
+            ve dönem içi danışman değişikliği işlemleri için kullanılır.
           </p>
         </div>
 
         <div className="action-row">
           <button type="button" className="btn btn-outline" onClick={handleExport}>
             <Download size={16} />
-            Sonuclari indir
+            Sonuçları indir
           </button>
           <button type="button" className="btn btn-outline" onClick={loadData}>
             <RefreshCcw size={16} />
@@ -163,19 +169,19 @@ export default function AdminDashboard() {
       {stats && (
         <section className="stat-grid">
           <article className="stat-card">
-            <span>Toplam ogrenci</span>
+            <span>Toplam öğrenci</span>
             <strong>{stats.studentCount}</strong>
           </article>
           <article className="stat-card">
-            <span>Atanan ogrenci</span>
+            <span>Atanan öğrenci</span>
             <strong>{stats.assignedStudentCount}</strong>
           </article>
           <article className="stat-card">
-            <span>Aktif danisman</span>
+            <span>Aktif danışman</span>
             <strong>{activeFaculty.length}</strong>
           </article>
           <article className="stat-card">
-            <span>Bekleyen ogrenci</span>
+            <span>Bekleyen öğrenci</span>
             <strong>{unassignedStudents.length}</strong>
           </article>
         </section>
@@ -186,7 +192,7 @@ export default function AdminDashboard() {
           <div className="section-header">
             <div>
               <p className="eyebrow">Operasyonlar</p>
-              <h2>Yerlestirme akisi</h2>
+              <h2>Yerleştirme akışı</h2>
             </div>
             <span className="icon-chip">
               <ShieldCheck size={18} />
@@ -194,28 +200,28 @@ export default function AdminDashboard() {
           </div>
 
           <p className="muted-copy">
-            Kontenjan hesabi aktif danismanlara dengeli dagitilir. Merkezi yerlestirme, sistemde
-            atanmamis tum ogrencileri yalnizca GANO sirasina gore isler.
+            Kontenjan hesabı aktif danışmanlara dengeli dağıtılır. Merkezi yerleştirme, sistemde
+            atanmamış tüm öğrencileri yalnızca GANO sırasına göre işler.
           </p>
 
           <div className="action-stack">
             <button
               type="button"
               className="btn btn-outline"
-              onClick={() => handleAction('calculate-quotas', 'Kontenjanlar guncellendi')}
+              onClick={() => handleAction('calculate-quotas', 'Kontenjanlar güncellendi')}
               disabled={loading}
             >
               <Calculator size={16} />
-              Kontenjanlari hesapla
+              Kontenjanları hesapla
             </button>
             <button
               type="button"
               className="btn btn-primary"
-              onClick={() => handleAction('run-assignment', 'Merkezi yerlestirme tamamlandi')}
+              onClick={() => handleAction('run-assignment', 'Merkezi yerleştirme tamamlandı')}
               disabled={loading}
             >
               <Play size={16} />
-              Merkezi yerlestirmeyi calistir
+              Merkezi yerleştirmeyi çalıştır
             </button>
           </div>
         </section>
@@ -223,8 +229,8 @@ export default function AdminDashboard() {
         <section className="panel">
           <div className="section-header">
             <div>
-              <p className="eyebrow">Manuel Danisman Degisikligi</p>
-              <h2>Ogrenci yeniden ata</h2>
+              <p className="eyebrow">Manuel Danışman Değişikliği</p>
+              <h2>Öğrenciyi yeniden ata</h2>
             </div>
             <span className="icon-chip">
               <UserCog size={18} />
@@ -233,31 +239,31 @@ export default function AdminDashboard() {
 
           <form className="stack-form" onSubmit={handleForceAssign}>
             <label className="field-block">
-              <span>Ogrenci</span>
+              <span>Öğrenci</span>
               <select
                 className="app-input"
                 value={selectedStudentId}
                 onChange={(event) => setSelectedStudentId(event.target.value)}
                 required
               >
-                <option value="">Ogrenci secin</option>
+                <option value="">Öğrenci seçin</option>
                 {results.map((result) => (
                   <option key={result.student_id} value={result.student_id}>
-                    {result.student_name} · {result.gano} · {result.faculty_name || 'Atanmadi'}
+                    {result.student_name} · {result.gano} · {result.faculty_name || 'Atanmadı'}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="field-block">
-              <span>Danisman</span>
+              <span>Danışman</span>
               <select
                 className="app-input"
                 value={selectedFacultyId}
                 onChange={(event) => setSelectedFacultyId(event.target.value)}
                 required
               >
-                <option value="">Danisman secin</option>
+                <option value="">Danışman seçin</option>
                 {activeFaculty.map((faculty) => (
                   <option key={faculty.id} value={faculty.id}>
                     {faculty.full_name} · {faculty.current_quota}/{faculty.base_quota}
@@ -267,7 +273,7 @@ export default function AdminDashboard() {
             </label>
 
             <button type="submit" className="btn btn-primary">
-              Atamayi guncelle
+              Atamayı güncelle
             </button>
           </form>
         </section>
@@ -277,7 +283,7 @@ export default function AdminDashboard() {
         <section className="panel">
           <div className="section-header">
             <div>
-              <p className="eyebrow">Danisman Yonetimi</p>
+              <p className="eyebrow">Danışman Yönetimi</p>
               <h2>Aktif ve pasif durumlar</h2>
             </div>
             <span className="icon-chip">
@@ -289,11 +295,11 @@ export default function AdminDashboard() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Danisman</th>
-                  <th>Bolum</th>
+                  <th>Danışman</th>
+                  <th>Bölüm</th>
                   <th>Kontenjan</th>
                   <th>Durum</th>
-                  <th>Islem</th>
+                  <th>İşlem</th>
                 </tr>
               </thead>
               <tbody>
@@ -329,7 +335,7 @@ export default function AdminDashboard() {
         <section className="panel">
           <div className="section-header">
             <div>
-              <p className="eyebrow">Kullanici Dizini</p>
+              <p className="eyebrow">Kullanıcı Dizini</p>
               <h2>Silme ve denetim</h2>
             </div>
             <span className="icon-chip">
@@ -344,7 +350,7 @@ export default function AdminDashboard() {
                   <th>Ad Soyad</th>
                   <th>Rol</th>
                   <th>Detay</th>
-                  <th>Islem</th>
+                  <th>İşlem</th>
                 </tr>
               </thead>
               <tbody>
@@ -354,13 +360,13 @@ export default function AdminDashboard() {
                       <strong>{item.full_name}</strong>
                       <span>{item.email}</span>
                     </td>
-                    <td>{item.role}</td>
+                    <td>{ROLE_LABELS[item.role] || item.role}</td>
                     <td>
                       {item.role === 'ogrenci'
                         ? `${item.department_name || '-'} · ${item.gano || '-'}`
                         : item.role === 'hoca'
                           ? `${item.department_name || '-'} · ${item.is_active === 1 ? 'Aktif' : 'Pasif'}`
-                          : 'Yonetici hesabi'}
+                          : 'Yönetici hesabı'}
                     </td>
                     <td>
                       <button
@@ -368,7 +374,7 @@ export default function AdminDashboard() {
                         className="btn btn-ghost btn-danger btn-small"
                         onClick={() => handleDeleteUser(item.id, item.full_name)}
                       >
-                        Kaldir
+                        Kaldır
                       </button>
                     </td>
                   </tr>
@@ -383,8 +389,8 @@ export default function AdminDashboard() {
         <section className="panel">
           <div className="section-header">
             <div>
-              <p className="eyebrow">Yerlestirme Ozeti</p>
-              <h2>Ogrenci dagilimi</h2>
+              <p className="eyebrow">Yerleştirme Özeti</p>
+              <h2>Öğrenci dağılımı</h2>
             </div>
             <span className="icon-chip">
               <Users size={18} />
@@ -393,15 +399,15 @@ export default function AdminDashboard() {
 
           <div className="detail-stack">
             <div className="detail-row">
-              <span>Atanmis ogrenci</span>
+              <span>Atanmış öğrenci</span>
               <strong>{assignedStudents.length}</strong>
             </div>
             <div className="detail-row">
-              <span>Atama bekleyen ogrenci</span>
+              <span>Atama bekleyen öğrenci</span>
               <strong>{unassignedStudents.length}</strong>
             </div>
             <div className="detail-row">
-              <span>Toplam log kaydi</span>
+              <span>Toplam log kaydı</span>
               <strong>{logs.length}</strong>
             </div>
           </div>
@@ -413,7 +419,7 @@ export default function AdminDashboard() {
       <section className="panel">
         <div className="section-header">
           <div>
-            <p className="eyebrow">Islem Gunlugu</p>
+            <p className="eyebrow">İşlem Günlüğü</p>
             <h2>Son hareketler</h2>
           </div>
           <span className="icon-chip">
@@ -427,8 +433,8 @@ export default function AdminDashboard() {
               <tr>
                 <th>Tarih</th>
                 <th>Eylem</th>
-                <th>Ogrenci</th>
-                <th>Danisman</th>
+                <th>Öğrenci</th>
+                <th>Danışman</th>
                 <th>Detay</th>
               </tr>
             </thead>

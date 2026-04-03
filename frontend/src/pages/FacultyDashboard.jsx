@@ -49,7 +49,7 @@ export default function FacultyDashboard({ user }) {
       setStudents(response.data);
     } catch (error) {
       setStudents([]);
-      setNotice({ type: 'error', text: error.response?.data?.error || 'Ogrenci listesi alinamadi.' });
+      setNotice({ type: 'error', text: error.response?.data?.error || 'Öğrenci listesi alınamadı.' });
     } finally {
       setLoading(false);
     }
@@ -58,10 +58,10 @@ export default function FacultyDashboard({ user }) {
   const sendInvite = async (studentId, studentName) => {
     try {
       await api.post('/faculty/invite', { student_id: studentId });
-      setNotice({ type: 'success', text: `${studentName} icin dogrudan teklif gonderildi.` });
+      setNotice({ type: 'success', text: `${studentName} için doğrudan teklif gönderildi.` });
       setStudents((current) => current.filter((student) => student.id !== studentId));
     } catch (error) {
-      setNotice({ type: 'error', text: error.response?.data?.error || 'Teklif gonderilemedi.' });
+      setNotice({ type: 'error', text: error.response?.data?.error || 'Teklif gönderilemedi.' });
     }
   };
 
@@ -69,10 +69,10 @@ export default function FacultyDashboard({ user }) {
     <div className="stack-layout animate-fade-in">
       <section className="hero-banner">
         <div>
-          <p className="eyebrow">Danisman Modulu</p>
+          <p className="eyebrow">Danışman Modülü</p>
           <h1>{user?.full_name}</h1>
           <p className="muted-copy">
-            {profile?.department_name} bolumunde kayitli danisman profili. Dogrudan teklif sureci,
+            {profile?.department_name} bölümünde kayıtlı danışman profili. Doğrudan teklif süreci,
             aktiflik durumu ve mevcut kontenjan bu panelden takip edilir.
           </p>
         </div>
@@ -87,7 +87,7 @@ export default function FacultyDashboard({ user }) {
             <strong>{profile?.is_active === 1 ? 'Aktif' : 'Pasif'}</strong>
           </article>
           <article className="stat-card">
-            <span>Ilgi alani</span>
+            <span>İlgi alanı</span>
             <strong>{profile?.expertise_keywords || '-'}</strong>
           </article>
         </div>
@@ -97,7 +97,7 @@ export default function FacultyDashboard({ user }) {
 
       {profile?.is_active !== 1 && (
         <div className="notice notice-info">
-          Danisman kaydiniz pasif durumda. Yeni teklif gonderemezsiniz; mevcut ogrenci listeniz goruntulenmeye devam eder.
+          Danışman kaydınız pasif durumda. Yeni teklif gönderemezsiniz; mevcut öğrenci listeniz görüntülenmeye devam eder.
         </div>
       )}
 
@@ -105,13 +105,13 @@ export default function FacultyDashboard({ user }) {
         <section className="panel">
           <div className="section-header">
             <div>
-              <p className="eyebrow">Kayitli Ogrenciler</p>
-              <h2>Danismanliginiz altindaki ogrenciler</h2>
+              <p className="eyebrow">Kayıtlı Öğrenciler</p>
+              <h2>Danışmanlığınız altındaki öğrenciler</h2>
             </div>
           </div>
 
           {assigned.length === 0 ? (
-            <p className="empty-state">Henuz atanmis bir ogrenciniz bulunmuyor.</p>
+            <p className="empty-state">Henüz atanmış bir öğrenciniz bulunmuyor.</p>
           ) : (
             <div className="card-list">
               {assigned.map((student) => (
@@ -134,13 +134,13 @@ export default function FacultyDashboard({ user }) {
         <section className="panel">
           <div className="section-header">
             <div>
-              <p className="eyebrow">Dogrudan Teklif</p>
-              <h2>Uygun ogrencileri filtreleyin</h2>
+              <p className="eyebrow">Doğrudan Teklif</p>
+              <h2>Uygun öğrencileri filtreleyin</h2>
             </div>
           </div>
 
           <p className="muted-copy">
-            Yalnizca aktif ve atanmamis ogrenciler listelenir. Teklif kabul edilirse ogrencinin danisman kaydi dogrudan kesinlesir.
+            Yalnızca aktif ve atanmamış öğrenciler listelenir. Teklif kabul edilirse öğrencinin danışman kaydı doğrudan kesinleşir.
           </p>
 
           <form onSubmit={handleSearch} className="inline-form">
@@ -163,7 +163,7 @@ export default function FacultyDashboard({ user }) {
           </form>
 
           {students.length === 0 ? (
-            <p className="empty-state">Kosullara uyan atanmamis ogrenci bulunmuyor.</p>
+            <p className="empty-state">Koşullara uyan atanmamış öğrenci bulunmuyor.</p>
           ) : (
             <div className="card-list">
               {students.map((student) => (
@@ -171,7 +171,7 @@ export default function FacultyDashboard({ user }) {
                   <div>
                     <h3>{student.full_name}</h3>
                     <p>{student.department_name}</p>
-                    <span>GANO: {student.gano} | Giris yili: {student.entry_year}</span>
+                    <span>GANO: {student.gano} | Giriş yılı: {student.entry_year}</span>
                   </div>
                   <button
                     type="button"
@@ -180,7 +180,7 @@ export default function FacultyDashboard({ user }) {
                     onClick={() => sendInvite(student.id, student.full_name)}
                   >
                     <Send size={16} />
-                    Teklif gonder
+                    Teklif gönder
                   </button>
                 </article>
               ))}

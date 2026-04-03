@@ -14,7 +14,7 @@ export default function PasswordPanel() {
     setNotice({ type: '', text: '' });
 
     if (newPassword !== confirmPassword) {
-      setNotice({ type: 'error', text: 'Yeni sifre ve tekrar sifresi ayni olmali.' });
+      setNotice({ type: 'error', text: 'Yeni şifre ve tekrar şifresi aynı olmalı.' });
       return;
     }
 
@@ -31,7 +31,7 @@ export default function PasswordPanel() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
-      setNotice({ type: 'error', text: error.response?.data?.error || 'Sifre guncellenemedi.' });
+      setNotice({ type: 'error', text: error.response?.data?.error || 'Şifre güncellenemedi.' });
     } finally {
       setSubmitting(false);
     }
@@ -41,8 +41,8 @@ export default function PasswordPanel() {
     <section className="panel">
       <div className="section-header">
         <div>
-          <p className="eyebrow">Hesap Guvenligi</p>
-          <h3>Sifre guncelle</h3>
+          <p className="eyebrow">Hesap Güvenliği</p>
+          <h3>Şifre güncelle</h3>
         </div>
         <span className="icon-chip">
           <ShieldCheck size={18} />
@@ -50,7 +50,7 @@ export default function PasswordPanel() {
       </div>
 
       <p className="muted-copy">
-        Kurumsal hesap erisiminizi guvende tutmak icin sifrenizi duzenli olarak yenileyin.
+        Kurumsal hesap erişiminizi güvende tutmak için şifrenizi düzenli olarak yenileyin.
       </p>
 
       {notice.text && (
@@ -61,7 +61,7 @@ export default function PasswordPanel() {
 
       <form className="stack-form" onSubmit={handleSubmit}>
         <label className="field-block">
-          <span>Mevcut sifre</span>
+          <span>Mevcut şifre</span>
           <input
             type="password"
             className="app-input"
@@ -72,7 +72,7 @@ export default function PasswordPanel() {
         </label>
 
         <label className="field-block">
-          <span>Yeni sifre</span>
+          <span>Yeni şifre</span>
           <input
             type="password"
             className="app-input"
@@ -84,7 +84,7 @@ export default function PasswordPanel() {
         </label>
 
         <label className="field-block">
-          <span>Yeni sifre tekrar</span>
+          <span>Yeni şifre tekrar</span>
           <input
             type="password"
             className="app-input"
@@ -97,7 +97,7 @@ export default function PasswordPanel() {
 
         <button type="submit" className="btn btn-primary" disabled={submitting}>
           <KeyRound size={16} />
-          {submitting ? 'Kaydediliyor' : 'Sifreyi guncelle'}
+          {submitting ? 'Kaydediliyor' : 'Şifreyi güncelle'}
         </button>
       </form>
     </section>

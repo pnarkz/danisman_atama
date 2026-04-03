@@ -1,47 +1,49 @@
-# Danisman Atama Sistemi
+# Danışman Atama Sistemi
 
-Danisman Atama Sistemi, ogrenci tercihlerinin, manuel danisman tekliflerinin ve merkezi yerlestirme surecinin tek bir kurumsal panel uzerinden yonetilmesi icin gelistirilmis bir web uygulamasidir. Sistem, otomatik yerlestirme akisinda yalnizca `GANO` onceligini esas alir; bunun disindaki tek istisna, danismanin manuel teklif gondermesi ve ogrencinin bu teklifi kabul etmesidir.
+Danışman Atama Sistemi, öğrenci tercihlerinin, manuel danışman tekliflerinin ve merkezi yerleştirme sürecinin tek bir kurumsal panel üzerinden yönetilmesi için geliştirilmiş bir web uygulamasıdır. Sistem, otomatik yerleştirme akışında yalnızca `GANO` önceliğini esas alır; bunun dışındaki tek istisna, danışmanın manuel teklif göndermesi ve öğrencinin bu teklifi kabul etmesidir.
 
-## Icerik
+## İçerik
 
 - [Genel Kapsam](#genel-kapsam)
-- [Teknoloji Yigini](#teknoloji-yigini)
-- [Dizin Yapisi](#dizin-yapisi)
-- [Hizli Baslangic](#hizli-baslangic)
-- [Ornek Hesaplar](#ornek-hesaplar)
+- [Teknoloji Yığını](#teknoloji-yığını)
+- [Dizin Yapısı](#dizin-yapısı)
+- [Hızlı Başlangıç](#hızlı-başlangıç)
+- [Örnek Hesaplar](#örnek-hesaplar)
 - [Veri Modeli](#veri-modeli)
-- [ER Diyagrami](#er-diyagrami)
-- [Sistem Akislari](#sistem-akislari)
-- [Is Kurallari](#is-kurallari)
-- [API Ozeti](#api-ozeti)
-- [Test Senaryolari](#test-senaryolari)
-- [Deploy Notlari](#deploy-notlari)
-- [Mevcut Sinirlar](#mevcut-sinirlar)
+- [ER Diyagramı](#er-diyagramı)
+- [Sistem Akışları](#sistem-akışları)
+- [İş Kuralları](#iş-kuralları)
+- [API Özeti](#api-özeti)
+- [Test Senaryoları](#test-senaryoları)
+- [Deploy Notları](#deploy-notları)
+- [Mevcut Sınırlar](#mevcut-sınırlar)
 
 ## Genel Kapsam
 
-Sistem uc ana rol uzerinden calisir:
+Sistem üç ana rol üzerinden çalışır:
 
-- `Yonetici`: kontenjan hesaplar, merkezi yerlestirmeyi calistirir, kullanici siler, danismani aktif/pasif yapar ve manuel yeniden atama yapar.
-- `Danisman`: atanmis ogrencilerini gorur, minimum GANO filtreli ogrenci aramasi yapar ve uygun ogrencilere manuel teklif gonderir.
-- `Ogrenci`: aktif danisman havuzunu gorur, tercih listesi olusturur, gerekirse gelen manuel teklifi kabul ya da reddeder.
+- `Yönetici`: kontenjan hesaplar, merkezi yerleştirmeyi çalıştırır, kullanıcı siler, danışmanı aktif/pasif yapar ve manuel yeniden atama yapar.
+- `Danışman`: atanmış öğrencilerini görür, minimum GANO filtreli öğrenci araması yapar ve uygun öğrencilere manuel teklif gönderir.
+- `Öğrenci`: aktif danışman havuzunu görür, tercih listesi oluşturur, gerekirse gelen manuel teklifi kabul ya da reddeder.
 
-Bu surumde uygulama:
+Bu sürümde uygulama:
 
-- mevcut stack uzerinde calisir: `React + Vite`, `Node.js + Express`, `SQLite`
-- merkezi yerlestirmede yalnizca `GANO` kriterini kullanir
-- danisman aktif/pasif durumunu yonetir
-- donem icinde manuel danisman degisikligi yapilmasina izin verir
-- sifre degistirme akisini tum roller icin destekler
+- mevcut stack üzerinde çalışır: `React + Vite`, `Node.js + Express`, `SQLite`
+- merkezi yerleştirmede yalnızca `GANO` kriterini kullanır
+- danışman aktif/pasif durumunu yönetir
+- dönem içinde manuel danışman değişikliği yapılmasına izin verir
+- şifre değiştirme akışını tüm roller için destekler
+- API/DB doğrulama testi ve Playwright tabanlı tarayıcı testi içerir
 
-## Teknoloji Yigini
+## Teknoloji Yığını
 
 - `Frontend`: React 19, React Router, Axios, Lucide React, Vite
 - `Backend`: Node.js, Express 5, JWT, bcryptjs
-- `Veritabani`: SQLite (`better-sqlite3`)
-- `Dokumantasyon`: Markdown + Mermaid
+- `Veritabanı`: SQLite (`better-sqlite3`)
+- `Test`: Playwright, Python tabanlı senaryo doğrulama
+- `Dokümantasyon`: Markdown + Mermaid
 
-## Dizin Yapisi
+## Dizin Yapısı
 
 ```text
 .
@@ -62,7 +64,14 @@ Bu surumde uygulama:
 │   ├── .env.example
 │   ├── package.json
 │   └── server.js
+├── docs
+│   ├── architecture.md
+│   ├── runtime_verification.py
+│   └── test-scenarios.md
 ├── frontend
+│   ├── e2e
+│   │   ├── app.spec.js
+│   │   └── start-backend.ps1
 │   ├── src
 │   │   ├── components
 │   │   ├── pages
@@ -70,19 +79,18 @@ Bu surumde uygulama:
 │   │   ├── api.js
 │   │   └── index.css
 │   ├── .env.example
-│   └── package.json
-├── docs
-│   ├── architecture.md
-│   └── test-scenarios.md
+│   ├── package.json
+│   ├── playwright.config.js
+│   └── vite.config.js
 └── README.md
 ```
 
 Not:
 
-- `frontend_cra` klasoru calisma akisinin parcasi degildir. Aktif arayuz `frontend` altindaki Vite uygulamasidir.
-- `docs/architecture.md` ve `docs/test-scenarios.md` dosyalari README icindeki mimari ve test maddelerinin ayri kopyalaridir.
+- `frontend_cra` klasörü çalışma akışının parçası değildir. Aktif arayüz `frontend` altındaki Vite uygulamasıdır.
+- `docs/architecture.md` ve `docs/test-scenarios.md` dosyaları README içindeki mimari ve test maddelerinin ayrı kopyalarıdır.
 
-## Hizli Baslangic
+## Hızlı Başlangıç
 
 ### 1. Repoyu klonla
 
@@ -91,7 +99,7 @@ git clone https://github.com/pnarkz/danisman_atama.git
 cd danisman_atama
 ```
 
-### 2. Backend ortamini hazirla
+### 2. Backend ortamını hazırla
 
 ```bash
 cd backend
@@ -104,15 +112,15 @@ Beklenen servis:
 
 - `http://localhost:3000`
 
-Backend ilk acilista:
+Backend ilk açılışta:
 
-- veritabani semasini olusturur
-- gerekli migrasyonlari uygular
-- bos veritabani durumunda ornek verileri yukler
+- veritabanı şemasını oluşturur
+- gerekli migrasyonları uygular
+- boş veritabanı durumunda örnek verileri yükler
 
-### 3. Frontend ortamini hazirla
+### 3. Frontend ortamını hazırla
 
-Yeni bir terminal acin:
+Yeni bir terminal açın:
 
 ```bash
 cd frontend
@@ -121,11 +129,11 @@ Copy-Item .env.example .env
 npm start
 ```
 
-Beklenen arayuz:
+Beklenen arayüz:
 
 - `http://localhost:5173`
 
-### 4. Ortam degiskenleri
+### 4. Ortam değişkenleri
 
 `backend/.env.example`
 
@@ -140,36 +148,36 @@ JWT_SECRET=danisman-atama-secret-key-2024
 VITE_API_BASE_URL=http://localhost:3000/api
 ```
 
-## Ornek Hesaplar
+## Örnek Hesaplar
 
-| Rol | E-posta | Sifre |
+| Rol | E-posta | Şifre |
 | --- | --- | --- |
-| Yonetici | `admin@ankara.edu.tr` | `admin123` |
-| Danisman | `ahmet.yilmaz@ankara.edu.tr` | `hoca123` |
-| Ogrenci | `ogrenci01@ankara.edu.tr` | `ogrenci123` |
+| Yönetici | `admin@ankara.edu.tr` | `admin123` |
+| Danışman | `ahmet.yilmaz@ankara.edu.tr` | `hoca123` |
+| Öğrenci | `ogrenci01@ankara.edu.tr` | `ogrenci123` |
 
-`seed.sql` icinde toplam:
+`seed.sql` içinde toplam:
 
-- `1` yonetici
-- `10` danisman
-- `50` ogrenci
-- `3` bolum
+- `1` yönetici
+- `10` danışman
+- `50` öğrenci
+- `3` bölüm
 
-tanimli gelir.
+tanımlı gelir.
 
 ## Veri Modeli
 
 Temel tablolar:
 
-- `departments`: bolum tanimlari
-- `users`: ortak kullanici kaydi
-- `students`: ogrenciye ozgu alanlar (`gano`, `entry_year`, `assigned_faculty_id`)
-- `faculty`: danismana ozgu alanlar (`expertise_keywords`, `base_quota`, `current_quota`, `is_active`)
-- `preferences`: ogrenci tercih siralamasi
-- `pre_assignments`: danismanin ogrenciye gonderdigi manuel teklifler
-- `assignment_logs`: yonetsel ve operasyonel hareket kayitlari
+- `departments`: bölüm tanımları
+- `users`: ortak kullanıcı kaydı
+- `students`: öğrenciye özgü alanlar (`gano`, `entry_year`, `assigned_faculty_id`)
+- `faculty`: danışmana özgü alanlar (`expertise_keywords`, `base_quota`, `current_quota`, `is_active`)
+- `preferences`: öğrenci tercih sıralaması
+- `pre_assignments`: danışmanın öğrenciye gönderdiği manuel teklifler
+- `assignment_logs`: yönetsel ve operasyonel hareket kayıtları
 
-## ER Diyagrami
+## ER Diyagramı
 
 ```mermaid
 erDiagram
@@ -231,101 +239,101 @@ erDiagram
     }
 ```
 
-## Sistem Akislari
+## Sistem Akışları
 
-### Giris akis diyagrami
+### Giriş akış diyagramı
 
 ```mermaid
 sequenceDiagram
-    participant U as Kullanici
+    participant U as Kullanıcı
     participant F as Frontend
     participant B as Backend
-    participant DB as Veritabani
+    participant DB as Veritabanı
 
-    U->>F: E-posta ve sifre girer
+    U->>F: E-posta ve şifre girer
     F->>B: POST /api/auth/login
-    B->>DB: Kullaniciyi bul ve sifreyi dogrula
-    DB-->>B: Kullanici kaydi
-    B-->>F: JWT + kullanici profili
-    F-->>U: Role uygun panele yonlendir
+    B->>DB: Kullanıcıyı bul ve şifreyi doğrula
+    DB-->>B: Kullanıcı kaydı
+    B-->>F: JWT + kullanıcı profili
+    F-->>U: Role uygun panele yönlendir
 ```
 
-### Ogrenci tercih kaydi ve merkezi yerlestirme
+### Öğrenci tercih kaydı ve merkezi yerleştirme
 
 ```mermaid
 sequenceDiagram
-    participant O as Ogrenci
+    participant O as Öğrenci
     participant F as Frontend
     participant B as Backend
-    participant DB as Veritabani
-    participant Y as Yonetici
+    participant DB as Veritabanı
+    participant Y as Yönetici
 
-    O->>F: Tercih listesini duzenler
+    O->>F: Tercih listesini düzenler
     F->>B: POST /api/students/preferences
-    B->>DB: Preferences kaydini gunceller
-    DB-->>B: Kayit tamam
-    B-->>F: Basarili cevap
-    Y->>F: Merkezi yerlestirmeyi baslatir
+    B->>DB: Preferences kaydını günceller
+    DB-->>B: Kayıt tamam
+    B-->>F: Başarılı cevap
+    Y->>F: Merkezi yerleştirmeyi başlatır
     F->>B: POST /api/admin/run-assignment
-    B->>DB: Atanmamis ogrencileri GANO sirasiyla alir
-    B->>DB: Tercih -> uygun kontenjan -> fallback akisini uygular
-    B-->>F: Istatistik ozeti
+    B->>DB: Atanmamış öğrencileri GANO sırasıyla alır
+    B->>DB: Tercih -> uygun kontenjan -> fallback akışını uygular
+    B-->>F: İstatistik özeti
 ```
 
-## Is Kurallari
+## İş Kuralları
 
-### 1. Otomatik yerlestirme
+### 1. Otomatik yerleştirme
 
-- merkezi yerlestirme yalnizca `GANO DESC` sirasina gore calisir
-- esitlik durumunda daha dusuk `id` degerine sahip ogrenci once islenir
-- yerlesme sirasinda ogrencinin tercih listesi takip edilir
-- tercihleri doluysa aktif danismanlar arasinda kalan kontenjani en yuksek olan danismana fallback uygulanir
+- merkezi yerleştirme yalnızca `GANO DESC` sırasına göre çalışır
+- eşitlik durumunda daha düşük `id` değerine sahip öğrenci önce işlenir
+- yerleşme sırasında öğrencinin tercih listesi takip edilir
+- tercihleri doluysa aktif danışmanlar arasında kalan kontenjanı en yüksek olan danışmana fallback uygulanır
 
-### 2. Manuel teklif istisnasi
+### 2. Manuel teklif istisnası
 
-- danisman, sadece aktif durumdaysa ve kontenjani dolu degilse ogrenciye teklif gonderebilir
-- ogrenci teklifi kabul ederse atama hemen kesinlesir
-- ogrenci manuel teklifi reddederse merkezi yerlestirme akisina geri doner
+- danışman, sadece aktif durumdaysa ve kontenjanı dolu değilse öğrenciye teklif gönderebilir
+- öğrenci teklifi kabul ederse atama hemen kesinleşir
+- öğrenci manuel teklifi reddederse merkezi yerleştirme akışına geri döner
 
-### 3. Kontenjan dagitimi
+### 3. Kontenjan dağıtımı
 
-- kontenjan hesabina yalnizca aktif danismanlar dahil edilir
-- dagitim dengeli yapilir
-- ortalama kapasite etrafinda `x+1 / x / x-1` mantigi uygulanir
-- toplam ogrenci sayisi aktif danisman sayisindan buyuk veya esit ise hicbir aktif danisman `0` kontenjan ile birakilmaz
+- kontenjan hesabına yalnızca aktif danışmanlar dahil edilir
+- dağıtım dengeli yapılır
+- ortalama kapasite etrafında `x+1 / x / x-1` mantığı uygulanır
+- toplam öğrenci sayısı aktif danışman sayısından büyük veya eşit ise hiçbir aktif danışman `0` kontenjan ile bırakılmaz
 
-### 4. Danisman aktif/pasif durumu
+### 4. Danışman aktif/pasif durumu
 
-- pasif danisman yeni teklif gonderemez
-- pasif danisman otomatik yerlestirme havuzuna dahil edilmez
-- mevcut atamalari gorulebilir, ancak yeni atama alamaz
+- pasif danışman yeni teklif gönderemez
+- pasif danışman otomatik yerleştirme havuzuna dahil edilmez
+- mevcut atamaları görülebilir, ancak yeni atama alamaz
 
-### 5. Donem ici danisman degisikligi
+### 5. Dönem içi danışman değişikliği
 
-- yonetici, `force-assign` islemi ile ogrenciyi baska aktif danismana tasiyabilir
-- onceki danismanin `current_quota` degeri azaltilir
-- yeni danismanin `current_quota` degeri artirilir
+- yönetici, `force-assign` işlemi ile öğrenciyi başka aktif danışmana taşıyabilir
+- önceki danışmanın `current_quota` değeri azaltılır
+- yeni danışmanın `current_quota` değeri artırılır
 
-### 6. Kullanici silme kurallari
+### 6. Kullanıcı silme kuralları
 
-- son kalan yonetici silinemez
-- aktif ogrencisi veya bekleyen teklifi olan danisman dogrudan silinemez
-- silinen ogrencinin tercih ve log baglantilari da temizlenir
+- son kalan yönetici silinemez
+- aktif öğrencisi veya bekleyen teklifi olan danışman doğrudan silinemez
+- silinen öğrencinin tercih ve log bağlantıları da temizlenir
 
-### 7. Sifre degistirme
+### 7. Şifre değiştirme
 
-- tum roller kendi sifresini degistirebilir
-- yeni sifre icin minimum uzunluk `8` karakterdir
+- tüm roller kendi şifresini değiştirebilir
+- yeni şifre için minimum uzunluk `8` karakterdir
 
-## API Ozeti
+## API Özeti
 
-### Kimlik dogrulama
+### Kimlik doğrulama
 
 - `POST /api/auth/login`
 - `POST /api/auth/register`
 - `POST /api/auth/change-password`
 
-### Ogrenci
+### Öğrenci
 
 - `GET /api/students/me`
 - `GET /api/students/faculty-list`
@@ -334,14 +342,14 @@ sequenceDiagram
 - `GET /api/students/invitations`
 - `POST /api/students/invitations/:id/respond`
 
-### Danisman
+### Danışman
 
 - `GET /api/faculty/me`
 - `GET /api/faculty/students`
 - `POST /api/faculty/invite`
 - `GET /api/faculty/assigned`
 
-### Yonetici
+### Yönetici
 
 - `POST /api/admin/calculate-quotas`
 - `POST /api/admin/run-assignment`
@@ -355,55 +363,60 @@ sequenceDiagram
 - `PATCH /api/admin/faculty/:id/status`
 - `DELETE /api/admin/users/:id`
 
-## Test Senaryolari
+## Test Senaryoları
 
-Word dokumanindaki maddeler esas alinarak takip edilmesi gereken senaryolar:
+Word dokümanındaki maddeler esas alınarak takip edilmesi gereken senaryolar:
 
-### Temel yonetim
+### Otomatik test komutları
 
-1. Yonetici girisi basarili olmali.
-2. Yonetici bir kullaniciyi sildiginde kullanici veritabani kaydindan da kalkmali.
-3. Son kalan yonetici silinmeye calisildiginda sistem engel koymali.
+```bash
+python docs/runtime_verification.py
+```
 
-### Ornek veri senaryosu
+```bash
+cd frontend
+npm run test:e2e
+```
 
-1. `40` ogrenci, `9` ogretim uyesi ve `1` yonetici ile test ortami kurulabilir.
-2. Dokuzuncu tercih uzerinden yerlestirme davranisi gozlemlenmeli.
-3. Bir danisman fazla tercih aldiginda kontenjan ve fallback mantigi kontrol edilmeli.
+### Kapsanan akışlar
 
-### Operasyonel senaryolar
+1. Rol bazlı giriş ve yetki kontrolü
+2. Yönetici kullanıcı silme ve veritabanı temizliği
+3. `40` öğrenci / `9` öğretim üyesi / `1` yönetici senaryosu
+4. Dokuzuncu tercih üzerinden yerleştirme
+5. Aşırı tercih edilen danışmanda GANO önceliği
+6. Boş kontenjan fallback davranışı
+7. Dönem ortasında danışmanın pasife alınması
+8. Aktif/pasif danışman görünürlüğü
+9. Manuel yeniden atama
+10. Şifre değiştirme
+11. Bölüm bilgisinin panellerde görünmesi
+12. Mail gereksinimi olmadan çalışma
+13. Birden fazla bölüm senaryosu
+14. Yönetici panelinde kontenjan hesaplama E2E akışı
+15. Öğrenci tercih kaydetme E2E akışı
+16. Danışman manuel teklif gönderme E2E akışı
 
-1. Bos kontenjan oldugunda fallback atama calismali.
-2. Danisman donem ortasinda ayrildiginda `pasif` duruma alinip ogrenciler manuel olarak yeniden atanabilmeli.
-3. Danisman aktif/pasif gecisleri yeni teklif ve merkezi yerlestirme havuzunu dogru etkilemeli.
-4. Danisman degisikligi yonetici panelinden kayitli ogrenci uzerinde uygulanabilmeli.
-5. Sifre degistirme senaryosu tum roller icin calismali.
+## Deploy Notları
 
-### Alan ve bolum senaryolari
+Bu proje şu an için tek makine veya küçük ölçekli kurum içi dağıtım hedefiyle uygun durumdadır.
 
-1. Bolum bilgisinin ogrenci ve danisman tablolarinda tutarli oldugu kontrol edilmeli.
-2. Farkli bolumlerden ogrenci ve danismanlarla ek senaryo datasi denenmeli.
+### Basit üretim yaklaşımı
 
-## Deploy Notlari
+1. Backend servisini `node server.js` veya bir process manager ile ayağa kaldırın.
+2. Frontend için `npm run build` çıktısını ters proxy arkasında sunun.
+3. Backend için `PORT` ve `JWT_SECRET`, frontend için `VITE_API_BASE_URL` değişkenlerini ortama tanımlayın.
+4. `backend/db` altındaki SQLite verisini yedekleme takvimine alın.
 
-Bu proje su an icin tek makine veya kucuk olcekli kurum ici dagitim hedefiyle uygun durumdadir.
-
-### Basit uretim yaklasimi
-
-1. Backend servisini `node server.js` veya bir process manager ile ayaga kaldirin.
-2. Frontend icin `npm run build` ciktisini ters proxy arkasinda sunun.
-3. Backend icin `PORT` ve `JWT_SECRET`, frontend icin `VITE_API_BASE_URL` degiskenlerini ortama tanimlayin.
-4. `backend/db` altindaki SQLite verisini yedekleme takvimine alin.
-
-### Tavsiye edilen operasyon notlari
+### Tavsiye edilen operasyon notları
 
 - ters proxy: `Nginx` veya `Caddy`
 - process manager: `pm2` veya sistem servisi
-- duzenli yedek: `danisman_atama.db`
-- log takibi: uygulama loglari + `assignment_logs` tablosu
+- düzenli yedek: `danisman_atama.db`
+- log takibi: uygulama logları + `assignment_logs` tablosu
 
-## Mevcut Sinirlar
+## Mevcut Sınırlar
 
-- E-posta bildirimi gereksinimi su an bilincli olarak uygulanmadi. Dokumanda da belirsiz olarak isaretlenmistir.
-- Otomatik test altyapisi henuz eklenmedi; test senaryolari README icinde operasyonel kontrol listesi olarak tutuluyor.
-- Sistem halen SQLite kullanir. Daha buyuk olcekli kullanim icin PostgreSQL migrasyonu sonraki faz olabilir.
+- E-posta bildirimi gereksinimi şu an bilinçli olarak uygulanmadı. Dokümanda da belirsiz olarak işaretlenmiştir.
+- Otomatik test altyapısı yerelde mevcuttur; ancak CI içinde çalışan sürekli test hattı henüz eklenmemiştir.
+- Sistem halen SQLite kullanır. Daha büyük ölçekli kullanım için PostgreSQL migrasyonu sonraki faz olabilir.
