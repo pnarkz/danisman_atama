@@ -29,6 +29,11 @@ router.get('/me', authenticate, authorize('hoca'), (req, res) => {
 router.get('/students', authenticate, authorize('hoca'), (req, res) => {
     try {
         const db = getDb();
+        const faculty = db.prepare('SELECT id, is_active FROM faculty WHERE user_id = ?').get(req.user.id);
+        if (!faculty || faculty.is_active !== 1) {
+            return res.status(403).json({ error: 'Pasif durumdaki danışmanlar yeni öğrenci arayamaz.' });
+        }
+
         // Return students who are NOT assigned yet
         // Optionally filter by GANO
         const { minGano } = req.query;
@@ -46,7 +51,7 @@ router.get('/students', authenticate, authorize('hoca'), (req, res) => {
             params.push(parseFloat(minGano));
         }
 
-        query += ' ORDER BY s.gano DESC';
+        query += ' ORDER BY s.gano DESC, s.id ASC';
 
         const students = db.prepare(query).all(...params);
         res.json(students);
@@ -64,12 +69,13 @@ router.post('/invite', authenticate, authorize('hoca'), (req, res) => {
         
         if (!student_id) return res.status(400).json({ error: 'Öğrenci ID gerekli.' });
 
-        const faculty = db.prepare('SELECT id, base_quota, current_quota FROM faculty WHERE user_id = ?').get(req.user.id);
+        const faculty = db.prepare('SELECT id, base_quota, current_quota, is_active FROM faculty WHERE user_id = ?').get(req.user.id);
+        if (!faculty || faculty.is_active !== 1) {
+            return res.status(403).json({ error: 'Pasif durumdaki danışmanlar teklif gönderemez.' });
+        }
         
         if (faculty.current_quota >= faculty.base_quota && faculty.base_quota > 0) {
-            // Might allow pre-assignments to bypass simple quota rules, but let's restrict if base_quota is reached.
-            // If base_quota is 0, it means quotas haven't been calculated yet, so maybe allow or block?
-            // Actually, we should allow invites before Gale-Shapley so they might exceed base, but usually they shouldn't.
+            return res.status(400).json({ error: 'Mevcut kontenjanınız dolu olduğu için yeni teklif gönderemezsiniz.' });
         }
 
         const student = db.prepare('SELECT is_assigned FROM students WHERE id = ?').get(student_id);
@@ -100,7 +106,7 @@ router.get('/assigned', authenticate, authorize('hoca'), (req, res) => {
         const faculty = db.prepare('SELECT id FROM faculty WHERE user_id = ?').get(req.user.id);
         
         const assignedStudents = db.prepare(`
-            SELECT s.id, u.full_name, u.email, s.gano, d.name as department_name
+            SELECT s.id, u.full_name, u.email, s.gano, s.entry_year, d.name as department_name
             FROM students s
             JOIN users u ON s.user_id = u.id
             JOIN departments d ON s.department_id = d.id

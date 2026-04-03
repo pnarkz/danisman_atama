@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, UserRound, Lock } from 'lucide-react';
+import { ArrowRight, Lock, ShieldCheck, UserRound } from 'lucide-react';
 import api from '../api';
 
 export default function Login({ onLogin }) {
@@ -8,105 +8,118 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (event) => {
+    event.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
-      const res = await api.post('/auth/login', { email, password });
-      
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      
-      if (onLogin) onLogin(res.data.user);
-      
-      const role = res.data.user.role;
-      if (role === 'admin') navigate('/admin');
-      else if (role === 'hoca') navigate('/faculty');
+      const response = await api.post('/auth/login', { email, password });
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+
+      if (onLogin) {
+        onLogin(response.data.user);
+      }
+
+      if (response.data.user.role === 'admin') navigate('/admin');
+      else if (response.data.user.role === 'hoca') navigate('/faculty');
       else navigate('/student');
-      
-    } catch (err) {
-      setError(err.response?.data?.error || 'Giriş yapılamadı.');
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || 'Oturum acilamadi.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      padding: '1rem'
-    }}>
-      <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '420px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
-            width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(45deg, #1a237e, #c62828)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.5rem', margin: '0 auto 1rem', boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
-          }}>
-            AÜ
+    <div className="login-grid animate-fade-in">
+      <section className="login-brand">
+        <p className="eyebrow">Kurumsal Erisim</p>
+        <h1>Danismanlik atama surecini tek merkezden yonetin.</h1>
+        <p className="muted-copy">
+          Ogrenci tercihleri, danisman teklifleri, kontenjan kararlarI ve merkezi yerlestirme
+          adimlari ayni operasyon akisi icinde izlenir.
+        </p>
+
+        <div className="feature-stack">
+          <article className="feature-card">
+            <ShieldCheck size={18} />
+            <div>
+              <strong>Yetkilendirme</strong>
+              <p className="muted-copy">Oturumlar rol bazli dogrulama ile korunur.</p>
+            </div>
+          </article>
+          <article className="feature-card">
+            <ArrowRight size={18} />
+            <div>
+              <strong>Merkezi Akis</strong>
+              <p className="muted-copy">Otomatik siralama asamasinda tek kriter GANO'dur.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="panel login-panel">
+        <div className="section-header">
+          <div>
+            <p className="eyebrow">Giris</p>
+            <h2>Sisteme erisin</h2>
           </div>
-          <h2 style={{ color: 'white', marginBottom: '0.5rem' }}>Ankara Üniversitesi</h2>
-          <p className="text-muted">Danışman Atama Sistemi (DAS)</p>
         </div>
 
-        {error && (
-          <div style={{ background: 'rgba(211, 47, 47, 0.2)', color: '#ff5252', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid rgba(211,47,47,0.4)' }}>
-            {error}
-          </div>
-        )}
+        <p className="muted-copy">
+          Kurumsal e-posta adresiniz ve sifreniz ile oturum acin.
+        </p>
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#b0bec5', fontSize: '0.9rem' }}>E-posta Adresi</label>
-            <div style={{ position: 'relative' }}>
-              <UserRound size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#78909c' }} />
-              <input 
-                type="email" 
-                className="glass-input" 
-                style={{ paddingLeft: '2.5rem' }}
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+        {error && <div className="notice notice-error">{error}</div>}
+
+        <form className="stack-form" onSubmit={handleLogin}>
+          <label className="field-block">
+            <span>E-posta adresi</span>
+            <div className="field-with-icon">
+              <UserRound size={16} />
+              <input
+                type="email"
+                className="app-input"
                 placeholder="ornek@ankara.edu.tr"
-                required 
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
               />
             </div>
-          </div>
-          
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#b0bec5', fontSize: '0.9rem' }}>Şifre</label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#78909c' }} />
-              <input 
-                type="password" 
-                className="glass-input" 
-                style={{ paddingLeft: '2.5rem' }}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required 
-              />
-            </div>
-          </div>
+          </label>
 
-          <button type="submit" className="btn btn-primary mt-2" disabled={loading} style={{ width: '100%', padding: '1rem' }}>
-            {loading ? 'Giriş Yapılıyor...' : <><LogIn size={20} /> Giriş Yap</>}
+          <label className="field-block">
+            <span>Sifre</span>
+            <div className="field-with-icon">
+              <Lock size={16} />
+              <input
+                type="password"
+                className="app-input"
+                placeholder="En az 8 karakter"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+            </div>
+          </label>
+
+          <button type="submit" className="btn btn-primary btn-wide" disabled={loading}>
+            <ArrowRight size={16} />
+            {loading ? 'Oturum aciliyor' : 'Devam et'}
           </button>
         </form>
-        
-        <p className="text-muted text-center mt-4" style={{ fontSize: '0.85rem' }}>
-          Demo Hesapları:<br/>
-          Admin: admin@ankara.edu.tr | Sifre: admin123<br/>
-          Hoca: ahmet.yilmaz@ankara.edu.tr | Sifre: hoca123<br/>
-          Ogrenci: ogrenci01@ankara.edu.tr | Sifre: ogrenci123
-        </p>
-      </div>
+
+        <div className="demo-box">
+          <p><strong>Demo hesaplari</strong></p>
+          <p>Admin: admin@ankara.edu.tr / admin123</p>
+          <p>Danisman: ahmet.yilmaz@ankara.edu.tr / hoca123</p>
+          <p>Ogrenci: ogrenci01@ankara.edu.tr / ogrenci123</p>
+        </div>
+      </section>
     </div>
   );
 }

@@ -29,4 +29,17 @@ function authorize(...roles) {
     };
 }
 
-module.exports = { authenticate, authorize, JWT_SECRET };
+function getUserFromToken(req) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return null;
+    }
+
+    try {
+        return jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+    } catch (err) {
+        return null;
+    }
+}
+
+module.exports = { authenticate, authorize, getUserFromToken, JWT_SECRET };

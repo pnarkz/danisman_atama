@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Search, Send, Users, Activity } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Search, Send } from 'lucide-react';
 import api from '../api';
+import PasswordPanel from '../components/PasswordPanel';
 
 export default function FacultyDashboard({ user }) {
   const [profile, setProfile] = useState(null);
@@ -8,158 +9,187 @@ export default function FacultyDashboard({ user }) {
   const [searchGano, setSearchGano] = useState('3.0');
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
+  const [notice, setNotice] = useState({ type: '', text: '' });
 
   const loadProfileInfo = async () => {
     try {
-      const profRes = await api.get('/faculty/me');
-      setProfile(profRes.data);
-      
-      const assignedRes = await api.get('/faculty/assigned');
-      setAssigned(assignedRes.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      const [profileResponse, assignedResponse] = await Promise.all([
+        api.get('/faculty/me'),
+        api.get('/faculty/assigned'),
+      ]);
 
-  const handleSearch = async (e) => {
-    e?.preventDefault();
-    setLoading(true);
-    try {
-      const res = await api.get(`/faculty/students?minGano=${searchGano}`);
-      setStudents(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+      setProfile(profileResponse.data);
+      setAssigned(assignedResponse.data);
+    } catch (error) {
+      console.error(error);
     }
   };
 
   useEffect(() => {
     loadProfileInfo();
-    handleSearch();
-  }, []);
+
+    const loadStudentsForCurrentFilter = async () => {
+      try {
+        const response = await api.get(`/faculty/students?minGano=${searchGano}`);
+        setStudents(response.data);
+      } catch {
+        setStudents([]);
+      }
+    };
+
+    loadStudentsForCurrentFilter();
+  }, [searchGano]);
+
+  const handleSearch = async (event) => {
+    event?.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await api.get(`/faculty/students?minGano=${searchGano}`);
+      setStudents(response.data);
+    } catch (error) {
+      setStudents([]);
+      setNotice({ type: 'error', text: error.response?.data?.error || 'Ogrenci listesi alinamadi.' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sendInvite = async (studentId, studentName) => {
     try {
       await api.post('/faculty/invite', { student_id: studentId });
-      setMessage({ text: `${studentName} adlı öğrenciye davet gönderildi.`, type: 'success' });
-      // Remove from list
-      setStudents(students.filter(s => s.id !== studentId));
-    } catch (err) {
-      setMessage({ text: err.response?.data?.error || 'Davet gönderilemedi.', type: 'error' });
+      setNotice({ type: 'success', text: `${studentName} icin dogrudan teklif gonderildi.` });
+      setStudents((current) => current.filter((student) => student.id !== studentId));
+    } catch (error) {
+      setNotice({ type: 'error', text: error.response?.data?.error || 'Teklif gonderilemedi.' });
     }
-    
-    setTimeout(() => setMessage({text:'', type:''}), 4000);
   };
 
   return (
-    <div className="animate-fade-in">
-      <div className="page-header">
+    <div className="stack-layout animate-fade-in">
+      <section className="hero-banner">
         <div>
-          <h2>Hoş Geldiniz, {user.full_name}</h2>
-          <p className="text-muted">{profile?.department_name} | İlgi Alanları: {profile?.expertise_keywords}</p>
+          <p className="eyebrow">Danisman Modulu</p>
+          <h1>{user?.full_name}</h1>
+          <p className="muted-copy">
+            {profile?.department_name} bolumunde kayitli danisman profili. Dogrudan teklif sureci,
+            aktiflik durumu ve mevcut kontenjan bu panelden takip edilir.
+          </p>
         </div>
-      </div>
 
-      {message.text && (
-        <div style={{ 
-          padding: '1rem', 
-          marginBottom: '2rem',
-          borderRadius: '8px',
-          background: message.type === 'success' ? 'rgba(46, 125, 50, 0.2)' : 'rgba(211, 47, 47, 0.2)',
-          color: message.type === 'success' ? '#81c784' : '#ff5252',
-          border: `1px solid ${message.type === 'success' ? 'rgba(46,125,50,0.5)' : 'rgba(211,47,47,0.5)'}`
-        }}>
-          {message.text}
+        <div className="meta-grid">
+          <article className="stat-card">
+            <span>Kontenjan</span>
+            <strong>{profile?.current_quota || 0} / {profile?.base_quota || '?'}</strong>
+          </article>
+          <article className="stat-card">
+            <span>Durum</span>
+            <strong>{profile?.is_active === 1 ? 'Aktif' : 'Pasif'}</strong>
+          </article>
+          <article className="stat-card">
+            <span>Ilgi alani</span>
+            <strong>{profile?.expertise_keywords || '-'}</strong>
+          </article>
+        </div>
+      </section>
+
+      {notice.text && <div className={`notice notice-${notice.type}`}>{notice.text}</div>}
+
+      {profile?.is_active !== 1 && (
+        <div className="notice notice-info">
+          Danisman kaydiniz pasif durumda. Yeni teklif gonderemezsiniz; mevcut ogrenci listeniz goruntulenmeye devam eder.
         </div>
       )}
 
-      <div className="grid-cards mb-4">
-        <div className="glass-panel text-center">
-          <h3 className="text-secondary mb-1">Mevcut Kontenjan</h3>
-          <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#f5f5f5' }}>
-            {profile?.current_quota || 0} / {profile?.base_quota || '?'}
+      <div className="duo-grid align-start">
+        <section className="panel">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow">Kayitli Ogrenciler</p>
+              <h2>Danismanliginiz altindaki ogrenciler</h2>
+            </div>
           </div>
-          <p className="text-muted mt-1">Kesinleşen Öğrenci Sayısı</p>
-        </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 1fr', gap: '2rem', alignItems: 'start' }}>
-        
-        {/* Atanmis Ogrenciler */}
-        <div className="glass-panel">
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem', marginBottom: '1rem' }}>
-            <Users size={20} className="text-accent" /> Danışmanlığını Aldığınız Öğrenciler
-          </h3>
-          
           {assigned.length === 0 ? (
-            <p className="text-muted" style={{ padding: '2rem 0', textAlign: 'center' }}>Henüz atanmış bir öğrenciniz bulunmuyor.</p>
+            <p className="empty-state">Henuz atanmis bir ogrenciniz bulunmuyor.</p>
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {assigned.map((s) => (
-                <li key={s.id} style={{ padding: '1rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="card-list">
+              {assigned.map((student) => (
+                <article key={student.id} className="list-card">
                   <div>
-                    <h4 style={{ margin: 0, fontWeight: 500 }}>{s.full_name}</h4>
-                    <p className="text-muted" style={{ fontSize: '0.85rem' }}>{s.email} | {s.department_name}</p>
+                    <h3>{student.full_name}</h3>
+                    <p>{student.email}</p>
+                    <span>{student.department_name}</span>
                   </div>
-                  <div className="badge badge-success">GANO: {s.gano}</div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Ogrenci Arama (Pre-Selection) */}
-        <div className="glass-panel">
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem', marginBottom: '1rem' }}>
-            <Search size={20} className="text-accent" /> Öğrenci Ara (Ön Teklif)
-          </h3>
-          <p className="text-muted mb-3" style={{ fontSize: '0.85rem' }}>
-            Merkezi atama öncesi yüksek not ortalamasına sahip öğrencilere "Danışmanlık Teklifi" gönderebilirsiniz. 
-            Teklif kabul edilirse kontenjanınızdan otomatik düşülür.
-          </p>
-          
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-            <input 
-              type="number" 
-              step="0.01" 
-              className="glass-input" 
-              placeholder="Minimum GANO (Örn: 3.5)" 
-              value={searchGano} 
-              onChange={e => setSearchGano(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <button type="submit" className="btn btn-outline" disabled={loading}>Filtrele</button>
-          </form>
-
-          {students.length === 0 ? (
-            <p className="text-muted text-center" style={{ padding: '1rem' }}>Eşleşen atanmamış öğrenci bulunamadı.</p>
-          ) : (
-            <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-              {students.map(s => (
-                <div key={s.id} style={{ 
-                  background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', 
-                  marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  border: '1px solid rgba(255,255,255,0.05)'
-                }}>
-                  <div>
-                    <h4 style={{ margin: 0 }}>{s.full_name}</h4>
-                    <span style={{ fontSize: '0.85rem', color: '#ffb74d', fontWeight: 'bold' }}>GANO: {s.gano}</span>
-                    <span className="text-muted" style={{ fontSize: '0.85rem', marginLeft: '0.5rem' }}>| Giriş: {s.entry_year}</span>
+                  <div className="compact-metric">
+                    <span>GANO</span>
+                    <strong>{student.gano}</strong>
                   </div>
-                  <button 
-                    onClick={() => sendInvite(s.id, s.full_name)} 
-                    className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-                  >
-                    <Send size={14} /> Teklif Gönder
-                  </button>
-                </div>
+                </article>
               ))}
             </div>
           )}
-        </div>
+        </section>
+
+        <section className="panel">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow">Dogrudan Teklif</p>
+              <h2>Uygun ogrencileri filtreleyin</h2>
+            </div>
+          </div>
+
+          <p className="muted-copy">
+            Yalnizca aktif ve atanmamis ogrenciler listelenir. Teklif kabul edilirse ogrencinin danisman kaydi dogrudan kesinlesir.
+          </p>
+
+          <form onSubmit={handleSearch} className="inline-form">
+            <label className="field-block field-inline">
+              <span>Minimum GANO</span>
+              <input
+                type="number"
+                step="0.01"
+                className="app-input"
+                value={searchGano}
+                onChange={(event) => setSearchGano(event.target.value)}
+                disabled={profile?.is_active !== 1}
+              />
+            </label>
+
+            <button type="submit" className="btn btn-outline" disabled={loading || profile?.is_active !== 1}>
+              <Search size={16} />
+              Filtrele
+            </button>
+          </form>
+
+          {students.length === 0 ? (
+            <p className="empty-state">Kosullara uyan atanmamis ogrenci bulunmuyor.</p>
+          ) : (
+            <div className="card-list">
+              {students.map((student) => (
+                <article key={student.id} className="list-card">
+                  <div>
+                    <h3>{student.full_name}</h3>
+                    <p>{student.department_name}</p>
+                    <span>GANO: {student.gano} | Giris yili: {student.entry_year}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={profile?.is_active !== 1}
+                    onClick={() => sendInvite(student.id, student.full_name)}
+                  >
+                    <Send size={16} />
+                    Teklif gonder
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
+
+      <PasswordPanel />
     </div>
   );
 }

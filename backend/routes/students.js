@@ -30,15 +30,43 @@ router.get('/me', authenticate, authorize('ogrenci'), (req, res) => {
 router.get('/faculty-list', authenticate, authorize('ogrenci'), (req, res) => {
     try {
         const db = getDb();
-        // Assuming student only sees faculty in their department or all? Usually all.
         const facultyList = db.prepare(`
             SELECT f.id, u.full_name, d.name as department_name, f.expertise_keywords, f.base_quota, f.current_quota
             FROM faculty f
             JOIN users u ON f.user_id = u.id
             JOIN departments d ON f.department_id = d.id
+            WHERE f.is_active = 1
+            ORDER BY u.full_name ASC
         `).all();
         
         res.json(facultyList);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Sunucu hatası.' });
+    }
+});
+
+// Get saved preferences
+router.get('/preferences', authenticate, authorize('ogrenci'), (req, res) => {
+    try {
+        const db = getDb();
+        const student = db.prepare('SELECT id FROM students WHERE user_id = ?').get(req.user.id);
+
+        if (!student) {
+            return res.status(404).json({ error: 'Öğrenci bulunamadı.' });
+        }
+
+        const preferences = db.prepare(`
+            SELECT p.rank, f.id, u.full_name, d.name as department_name, f.expertise_keywords
+            FROM preferences p
+            JOIN faculty f ON p.faculty_id = f.id
+            JOIN users u ON f.user_id = u.id
+            JOIN departments d ON f.department_id = d.id
+            WHERE p.student_id = ?
+            ORDER BY p.rank ASC
+        `).all(student.id);
+
+        res.json(preferences);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Sunucu hatası.' });
@@ -55,9 +83,15 @@ router.post('/preferences', authenticate, authorize('ogrenci'), (req, res) => {
 
         const db = getDb();
         const student = db.prepare('SELECT id, is_assigned FROM students WHERE user_id = ?').get(req.user.id);
+        const activeFacultyIds = new Set(
+            db.prepare('SELECT id FROM faculty WHERE is_active = 1').all().map((faculty) => faculty.id)
+        );
         
         if (!student) return res.status(404).json({ error: 'Öğrenci bulunamadı.' });
         if (student.is_assigned) return res.status(400).json({ error: 'Zaten bir danışmana atanmışsınız. Tercih değiştiremezsiniz.' });
+        if (!preferences.every((facultyId) => activeFacultyIds.has(facultyId))) {
+            return res.status(400).json({ error: 'Tercih listenizde pasif veya geçersiz bir hoca bulunuyor.' });
+        }
 
         // Start transaction
         const savePrefs = db.transaction((studentId, prefs) => {
@@ -125,6 +159,10 @@ router.post('/invitations/:id/respond', authenticate, authorize('ogrenci'), (req
         const invite = db.prepare('SELECT * FROM pre_assignments WHERE id = ? AND student_id = ?').get(inviteId, student.id);
         if (!invite) return res.status(404).json({ error: 'Davet bulunamadı.' });
         if (invite.status !== 'pending') return res.status(400).json({ error: 'Bu davet zaten yanıtlanmış.' });
+        const faculty = db.prepare('SELECT is_active FROM faculty WHERE id = ?').get(invite.faculty_id);
+        if (!faculty || faculty.is_active !== 1) {
+            return res.status(400).json({ error: 'Bu danışman şu anda aktif olmadığı için teklif sonuçlandırılamaz.' });
+        }
 
         const transaction = db.transaction(() => {
             db.prepare('UPDATE pre_assignments SET status = ? WHERE id = ?').run(status, inviteId);

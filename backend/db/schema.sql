@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS faculty (
     user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
     department_id INTEGER NOT NULL REFERENCES departments(id),
     expertise_keywords TEXT DEFAULT '',
+    is_active INTEGER NOT NULL DEFAULT 1,
     base_quota INTEGER DEFAULT 0,
     current_quota INTEGER DEFAULT 0
 );

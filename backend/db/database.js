@@ -8,6 +8,17 @@ const SEED_PATH = path.join(__dirname, 'seed.sql');
 
 let db;
 
+function hasColumn(tableName, columnName) {
+    const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
+    return columns.some((column) => column.name === columnName);
+}
+
+function migrateDb() {
+    if (!hasColumn('faculty', 'is_active')) {
+        db.prepare('ALTER TABLE faculty ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1').run();
+    }
+}
+
 function getDb() {
     if (!db) {
         db = new Database(DB_PATH);
@@ -21,6 +32,7 @@ function getDb() {
 function initializeDb() {
     const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
     db.exec(schema);
+    migrateDb();
 
     // Check if seed data is needed
     const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;

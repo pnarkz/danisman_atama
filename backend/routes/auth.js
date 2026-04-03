@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { getDb } = require('../db/database');
-const { JWT_SECRET } = require('../middleware/auth');
+const { authenticate, JWT_SECRET } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -101,6 +101,40 @@ router.post('/login', (req, res) => {
         });
     } catch (err) {
         console.error('Login error:', err);
+        res.status(500).json({ error: 'Sunucu hatası.' });
+    }
+});
+
+// POST /api/auth/change-password
+router.post('/change-password', authenticate, (req, res) => {
+    try {
+        const { current_password, new_password } = req.body;
+        const db = getDb();
+
+        if (!current_password || !new_password) {
+            return res.status(400).json({ error: 'Mevcut şifre ve yeni şifre zorunludur.' });
+        }
+
+        if (new_password.length < 8) {
+            return res.status(400).json({ error: 'Yeni şifre en az 8 karakter olmalıdır.' });
+        }
+
+        const user = db.prepare('SELECT id, password_hash FROM users WHERE id = ?').get(req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+        }
+
+        const valid = bcrypt.compareSync(current_password, user.password_hash);
+        if (!valid) {
+            return res.status(401).json({ error: 'Mevcut şifre doğrulanamadı.' });
+        }
+
+        const passwordHash = bcrypt.hashSync(new_password, 10);
+        db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, req.user.id);
+
+        res.json({ message: 'Şifreniz başarıyla güncellendi.' });
+    } catch (err) {
+        console.error('Change password error:', err);
         res.status(500).json({ error: 'Sunucu hatası.' });
     }
 });

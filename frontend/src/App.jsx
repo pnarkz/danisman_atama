@@ -5,81 +5,112 @@ import StudentDashboard from './pages/StudentDashboard';
 import FacultyDashboard from './pages/FacultyDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Navbar from './components/Navbar';
-import api from './api';
 
-function ProtectedRoute({ children, allowedRoles }) {
+const DASHBOARD_BY_ROLE = {
+  admin: '/admin',
+  hoca: '/faculty',
+  ogrenci: '/student',
+};
+
+function readStoredSession() {
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
-  
+
   if (!token || !userStr) {
-    return <Navigate to="/login" />;
+    return { token: null, user: null };
   }
-  
-  const user = JSON.parse(userStr);
+
+  try {
+    return {
+      token,
+      user: JSON.parse(userStr),
+    };
+  } catch {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return { token: null, user: null };
+  }
+}
+
+function ProtectedRoute({ children, allowedRoles }) {
+  const { token, user } = readStoredSession();
+
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" />;
+    return <Navigate to={DASHBOARD_BY_ROLE[user.role] || '/login'} replace />;
   }
-  
+
   return children;
 }
 
 function App() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => readStoredSession().user);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    if (token && userStr) {
-      const u = JSON.parse(userStr);
-      setUser(u);
-      
-      // Auto redirect if on home
-      if (window.location.pathname === '/') {
-        if (u.role === 'admin') navigate('/admin');
-        else if (u.role === 'hoca') navigate('/faculty');
-        else if (u.role === 'ogrenci') navigate('/student');
-      }
+    if (window.location.pathname === '/') {
+      navigate(user ? (DASHBOARD_BY_ROLE[user.role] || '/login') : '/login');
     }
-  }, [navigate]);
+  }, [navigate, user]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    navigate('/login');
+  };
 
   return (
-    <div className="app-layout">
-      {user && <Navbar user={user} onLogout={() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-        navigate('/login');
-      }} />}
-      
-      <main className={user ? "app-container" : ""}>
+    <div className="app-shell">
+      {user && <Navbar user={user} onLogout={handleLogout} />}
+
+      <main className={user ? 'page-shell' : 'login-shell'}>
         <Routes>
-          <Route path="/login" element={<Login onLogin={(u) => setUser(u)} />} />
-          
-          <Route path="/student" element={
-            <ProtectedRoute allowedRoles={['ogrenci']}>
-              <StudentDashboard user={user} />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/faculty" element={
-            <ProtectedRoute allowedRoles={['hoca']}>
-              <FacultyDashboard user={user} />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/admin" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminDashboard user={user} />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="*" element={
-            <div className="glass-panel text-center mt-4">
-              <h2>404 - Sayfa Bulunamadı</h2>
-            </div>
-          } />
+          <Route path="/login" element={<Login onLogin={(nextUser) => setUser(nextUser)} />} />
+
+          <Route
+            path="/student"
+            element={(
+              <ProtectedRoute allowedRoles={['ogrenci']}>
+                <StudentDashboard user={user} />
+              </ProtectedRoute>
+            )}
+          />
+
+          <Route
+            path="/faculty"
+            element={(
+              <ProtectedRoute allowedRoles={['hoca']}>
+                <FacultyDashboard user={user} />
+              </ProtectedRoute>
+            )}
+          />
+
+          <Route
+            path="/admin"
+            element={(
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboard user={user} />
+              </ProtectedRoute>
+            )}
+          />
+
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route
+            path="*"
+            element={(
+              <section className="panel panel-centered">
+                <p className="eyebrow">404</p>
+                <h2>Sayfa bulunamadi</h2>
+                <p className="muted-copy">
+                  Baglanti guncel degil veya bu ekrana erisim izniniz bulunmuyor.
+                </p>
+              </section>
+            )}
+          />
         </Routes>
       </main>
     </div>
