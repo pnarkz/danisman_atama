@@ -155,6 +155,7 @@ VITE_API_BASE_URL=http://localhost:3000/api
 | Yönetici | `admin@ankara.edu.tr` | `admin123` |
 | Danışman | `ahmet.yilmaz@ankara.edu.tr` | `hoca123` |
 | Öğrenci | `ogrenci01@ankara.edu.tr` | `ogrenci123` |
+| Öğrenci (EEE demo) | `ogrenci02@ankara.edu.tr` | `ogrenci123` |
 
 `seed.sql` içinde toplam:
 

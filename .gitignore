@@ -9,6 +9,9 @@ dev_error.txt
 vite-error.txt
 *.log
 __pycache__/
+backend/db/*.db
+backend/db/*.db-shm
+backend/db/*.db-wal
 backend/db/*.e2e.db
 backend/db/*.e2e.db-shm
 backend/db/*.e2e.db-wal
